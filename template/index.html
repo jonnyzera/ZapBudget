@@ -10,18 +10,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             scroll-behavior: smooth;
             -webkit-tap-highlight-color: transparent;
+            background-color: #f8fafc;
         }
 
+        /* Estilo para simular papel no telemóvel sem quebrar o layout */
         .receipt-preview {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px);
-            background-size: 15px 15px;
+            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            overflow-x: hidden;
         }
 
         .paper {
@@ -29,6 +31,8 @@
             position: relative;
             min-height: 500px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 100%;
         }
 
         .paper::before {
@@ -38,7 +42,7 @@
             left: 0;
             right: 0;
             height: 6px;
-            background: #22c55e;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
         }
 
         .hero-gradient {
@@ -50,63 +54,109 @@
             background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
         }
 
+        /* Estilos de Impressão Refinados */
         @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
-            #app-section { padding: 0; margin: 0; }
-            .receipt-preview { background: none !important; padding: 0 !important; box-shadow: none !important; }
-            .paper { box-shadow: none !important; border: 1px solid #e2e8f0; }
+            .no-print, nav, footer, header, #pricing, #beneficios, .text-center.mb-12 { display: none !important; }
+            body { background: white; margin: 0; padding: 0; }
+            #app-section { padding: 0; margin: 0; border: none; }
+            .grid { display: block !important; }
+            #previewArea { 
+                padding: 0 !important; 
+                box-shadow: none !important; 
+                background: none !important;
+                width: 100% !important;
+                border: none !important;
+            }
+            .paper { 
+                box-shadow: none !important; 
+                border: 1px solid #eee; 
+                width: 100% !important;
+                min-height: auto !important;
+                margin: 0;
+            }
+            input, textarea, button { display: none !important; }
         }
 
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #22c55e;
-            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+        /* Melhoria de toques no mobile */
+        input, textarea, button {
+            font-size: 16px !important; /* Evita zoom automático no iOS */
         }
         
         button, a.btn {
-            min-height: 54px;
+            min-height: 56px;
         }
 
-        /* Safe area for mobile devices */
         .safe-bottom {
-            padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
         }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            margin-left: -140px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 16px;
+            padding: 20px;
+            position: fixed;
+            z-index: 150;
+            left: 50%;
+            bottom: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
+<body class="text-slate-900 overflow-x-hidden">
 
-    <!-- Navegação -->
+    <!-- Navegação Responsiva -->
     <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <div class="bg-green-600 p-1.5 rounded-lg text-white">
                     <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
                 </div>
                 <span class="font-black text-xl tracking-tight uppercase italic text-slate-900">Zap<span class="text-green-600">Budget</span></span>
             </div>
-            <a href="#app-section" class="bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all active:scale-95">
-                Criar Orçamento
-            </a>
+            
+            <div class="flex items-center gap-4 sm:gap-6">
+                <a href="login.html" class="text-slate-600 font-bold text-sm hover:text-green-600 transition-colors">
+                    Entrar
+                </a>
+                <a href="#app-section" class="bg-slate-900 text-white px-5 sm:px-8 py-2.5 rounded-full text-xs sm:text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
+                    Criar Orçamento
+                </a>
+            </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <header class="hero-gradient pt-20 pb-16 px-4 no-print border-b border-slate-100">
+    <!-- Hero Section Adaptável -->
+    <header class="hero-gradient pt-16 pb-12 sm:pt-24 sm:pb-20 px-4 no-print border-b border-slate-100">
         <div class="max-w-5xl mx-auto text-center">
-            <span class="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 border border-green-200">
-                Micro-Empreendedor Profissional
+            <span class="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-6 border border-green-200 shadow-sm">
+                Software para Micro-Empreendedores
             </span>
-            <h1 class="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.1] tracking-tighter">
-                A sua empresa merece <br><span class="text-green-600">Orçamentos Profissionais</span>
+            <h1 class="text-4xl sm:text-6xl md:text-8xl font-black text-slate-900 mb-8 leading-[1.05] tracking-tighter">
+                Orçamentos <br class="hidden sm:block"> <span class="text-green-600">Imbatíveis</span> no Zap
             </h1>
-            <p class="text-lg md:text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-                Gere documentos elegantes em segundos e envie direto para o WhatsApp do seu cliente. Impressione e feche mais negócios hoje.
+            <p class="text-base sm:text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+                Profissionalize o seu negócio em segundos. Gere propostas PDF e envie direto para o WhatsApp do seu cliente com um clique.
             </p>
             
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="#app-section" class="w-full sm:w-auto bg-green-600 text-white px-10 py-5 rounded-2xl font-extrabold text-xl hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-green-200 active:scale-95">
-                    Começar Agora Grátis
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-5">
+                <a href="#app-section" class="w-full sm:w-auto bg-green-600 text-white px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-green-200 active:scale-95">
+                    Começar Agora
                     <i data-lucide="zap" class="w-6 h-6 fill-white"></i>
                 </a>
                 <div class="flex flex-col items-center sm:items-start gap-1">
@@ -117,154 +167,225 @@
                         <i data-lucide="star" class="w-4 h-4 fill-current"></i>
                         <i data-lucide="star" class="w-4 h-4 fill-current"></i>
                     </div>
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-tighter italic">Usado por +10.000 profissionais</p>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter italic">Líder em satisfação no Brasil</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Benefícios -->
-    <section id="beneficios" class="py-24 bg-white no-print">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
-                <div class="space-y-5 p-6 rounded-3xl hover:bg-slate-50 transition-colors group">
-                    <div class="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+    <!-- Benefícios Mobile-First -->
+    <section id="beneficios" class="py-20 bg-white no-print">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16">
+                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-4">
+                    <div class="bg-blue-50 p-4 rounded-2xl shadow-inner">
                         <i data-lucide="timer" class="text-blue-600 w-8 h-8"></i>
                     </div>
-                    <h3 class="text-2xl font-extrabold text-slate-800">Rapidez Real</h3>
-                    <p class="text-slate-600 leading-relaxed font-medium">Preencha os dados e o orçamento está pronto. Menos tempo no papel, mais tempo na execução.</p>
+                    <h3 class="text-xl font-black text-slate-800 tracking-tight">Velocidade Extrema</h3>
+                    <p class="text-slate-500 font-medium leading-relaxed">Não perca vendas por demora. Em 30 segundos o seu cliente tem a proposta na mão.</p>
                 </div>
-                <div class="space-y-5 p-6 rounded-3xl hover:bg-slate-50 transition-colors group">
-                    <div class="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-4">
+                    <div class="bg-green-50 p-4 rounded-2xl shadow-inner">
                         <i data-lucide="award" class="text-green-600 w-8 h-8"></i>
                     </div>
-                    <h3 class="text-2xl font-extrabold text-slate-800">Postura de Elite</h3>
-                    <p class="text-slate-600 leading-relaxed font-medium">Seja visto como um profissional sério. Documentos limpos passam confiança e valor ao seu serviço.</p>
+                    <h3 class="text-xl font-black text-slate-800 tracking-tight">Impacto Visual</h3>
+                    <p class="text-slate-500 font-medium leading-relaxed">Design limpo e moderno que transmite autoridade. Cobre o preço justo pelo seu serviço.</p>
                 </div>
-                <div class="space-y-5 p-6 rounded-3xl hover:bg-slate-50 transition-colors group">
-                    <div class="bg-emerald-100 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-4">
+                    <div class="bg-emerald-50 p-4 rounded-2xl shadow-inner">
                         <i data-lucide="message-square" class="text-emerald-600 w-8 h-8"></i>
                     </div>
-                    <h3 class="text-2xl font-extrabold text-slate-800">Foco no WhatsApp</h3>
-                    <p class="text-slate-600 leading-relaxed font-medium">Criado para o meio de comunicação que você e o seu cliente usam o dia todo: o WhatsApp.</p>
+                    <h3 class="text-xl font-black text-slate-800 tracking-tight">WhatsApp Nativo</h3>
+                    <p class="text-slate-500 font-medium leading-relaxed">A integração perfeita. Nada de emails ignorados. Envie onde o cliente realmente lê.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Seção de Preços (SaaS Model) -->
-    <section id="pricing" class="py-16 px-4 no-print bg-slate-50">
-        <div class="max-w-md mx-auto">
-            <div class="gradient-pricing rounded-[32px] p-8 text-white shadow-2xl shadow-green-200 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                <div class="relative z-10 text-center">
-                    <span class="bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Assinatura Mensal</span>
-                    <div class="flex items-center justify-center gap-1 mb-2 mt-6">
-                        <span class="text-2xl font-bold opacity-50 mt-2">R$</span>
-                        <span class="text-6xl font-black tracking-tighter">19,90</span>
-                        <span class="text-lg font-bold opacity-50 self-end mb-2">/mês</span>
+    <!-- SaaS Pricing Section (Mobile-First & Premium Desktop) -->
+    <section id="pricing" class="py-24 px-6 no-print bg-slate-50">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">O Investimento do seu Sucesso</h2>
+                <p class="text-slate-500 font-semibold mt-4 text-lg">Profissionalismo por menos que um café por dia.</p>
+            </div>
+            
+            <!-- Card Principal SaaS -->
+            <div class="gradient-pricing rounded-[48px] p-8 sm:p-12 text-white shadow-2xl shadow-green-200 relative overflow-hidden">
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-white/10 rounded-full blur-[80px]"></div>
+                <div class="absolute -left-20 -bottom-20 w-48 h-48 bg-black/10 rounded-full blur-[60px]"></div>
+                
+                <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-white/20 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-white/10">Plano Profissional</span>
+                            <div class="bg-yellow-400 text-slate-900 text-[9px] font-bold px-3 py-1 rounded-full uppercase">Melhor Escolha</div>
+                        </div>
+                        
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-bold opacity-60">R$</span>
+                            <span class="text-7xl font-black tracking-tighter">19,90</span>
+                            <span class="text-xl font-bold opacity-60">/mês</span>
+                        </div>
+                        
+                        <p class="text-green-100 font-medium leading-relaxed">
+                            Acesso total a todas as ferramentas de conversão para fechar mais negócios hoje mesmo.
+                        </p>
                     </div>
-                    <p class="text-xs font-medium opacity-80 mb-6 italic">Cancele quando quiser, sem fidelidade.</p>
                     
-                    <ul class="text-left space-y-3 mb-8 text-sm font-semibold border-t border-white/10 pt-6">
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-300"></i> Orçamentos Ilimitados</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-300"></i> Atualizações e Novas Funcionalidades</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-300"></i> Suporte Prioritário</li>
-                    </ul>
-                    <a href="#" class="block w-full bg-white text-green-700 font-black py-4 rounded-2xl text-lg hover:bg-green-50 transition-all shadow-lg active:scale-95">
-                        ASSINAR AGORA
-                    </a>
+                    <div class="bg-white/10 backdrop-blur-sm p-8 rounded-3xl border border-white/10">
+                        <ul class="space-y-4 text-sm font-semibold mb-8">
+                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Orçamentos Ilimitados</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Logo da sua Empresa</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Gestão de Clientes (CRM)</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Suporte Prioritário</li>
+                        </ul>
+                        <a href="login.html" class="block w-full bg-white text-green-700 text-center font-black py-5 rounded-2xl text-lg hover:bg-green-50 transition-all shadow-xl active:scale-95">
+                            ASSINAR AGORA
+                        </a>
+                    </div>
                 </div>
             </div>
+            <p class="text-center text-xs font-bold text-slate-400 mt-8 uppercase tracking-[0.2em]">Cancele a qualquer momento · Sem fidelidade</p>
         </div>
     </section>
 
-    <!-- App Section -->
-    <section id="app-section" class="py-16 px-4 border-t border-slate-200 bg-white">
-        <div class="max-w-6xl mx-auto">
+    <!-- App Generator Section (Totalmente Responsiva) -->
+    <section id="app-section" class="py-20 px-4 border-t border-slate-200 bg-white">
+        <div class="max-w-7xl mx-auto">
             <div class="text-center mb-12 no-print">
-                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Gerador Instantâneo</h2>
-                <p class="text-slate-500 mt-2 text-lg font-medium">Preencha abaixo para gerar a sua proposta</p>
+                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Gerador de Propostas</h2>
+                <p class="text-slate-500 mt-2 font-semibold text-lg">Os dados digitados são atualizados no preview ao lado.</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
                 
-                <!-- Formulário -->
-                <div class="space-y-6 no-print">
-                    <div class="bg-white p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-100">
+                <!-- Formulário (Lado Esquerdo no Desktop) -->
+                <div class="lg:col-span-5 space-y-8 no-print order-2 lg:order-1">
+                    <div class="bg-white rounded-[40px] p-8 shadow-2xl shadow-slate-200 border border-slate-100 space-y-8">
                         <div class="space-y-6">
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">A Sua Empresa / Nome</label>
-                                <input type="text" id="vendorName" placeholder="Ex: João Reparos" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                            <div class="flex items-center gap-3 text-green-600 font-black text-xs uppercase tracking-widest border-b border-slate-100 pb-3">
+                                <i data-lucide="user" class="w-4 h-4"></i> Identificação do Negócio
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome do Cliente</label>
-                                <input type="text" id="clientName" placeholder="Quem vai receber?" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Descrição do Serviço</label>
-                                <textarea id="serviceDescription" rows="4" placeholder="O que será feito?" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-medium text-slate-600 transition-all"></textarea>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 gap-6">
                                 <div>
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Valor (R$)</label>
-                                    <input type="number" id="totalValue" placeholder="0.00" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-black text-green-600 text-lg">
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Sua Empresa / Nome Profissional</label>
+                                    <input type="text" id="vendorName" placeholder="Ex: João Reparos" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Validade</label>
-                                    <input type="date" id="expiryDate" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-600">
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Nome Completo do Cliente</label>
+                                    <input type="text" id="clientName" placeholder="Quem recebe a proposta?" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 text-green-600 font-black text-xs uppercase tracking-widest border-b border-slate-100 pb-3">
+                                <i data-lucide="briefcase" class="w-4 h-4"></i> Detalhes dos Serviços
+                            </div>
+                            <textarea id="serviceDescription" rows="5" placeholder="Liste aqui o que será realizado..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-medium transition-all focus:ring-4 focus:ring-green-50"></textarea>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Prazo Estipulado</label>
+                                    <input type="text" id="deliveryTime" placeholder="Ex: 5 dias" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Método de Pagamento</label>
+                                    <input type="text" id="paymentMethod" placeholder="Ex: Pix 50/50" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 text-green-600 font-black text-xs uppercase tracking-widest border-b border-slate-100 pb-3">
+                                <i data-lucide="dollar-sign" class="w-4 h-4"></i> Valor e Expiração
+                            </div>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Investimento (R$)</label>
+                                    <input type="text" id="totalValue" placeholder="R$ 0,00" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-lg font-black text-green-700 transition-all focus:ring-4 focus:ring-green-50">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Validade</label>
+                                    <input type="date" id="expiryDate" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold transition-all focus:ring-4 focus:ring-green-50">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-3">
-                        <button onclick="shareWhatsApp()" class="w-full bg-[#25D366] text-white font-black py-5 rounded-2xl transition-all active:scale-95 shadow-lg shadow-green-100 flex items-center justify-center gap-3 text-lg">
-                            <i data-lucide="message-circle" class="w-6 h-6"></i>
-                            Enviar no WhatsApp
+                    <!-- Botões de Ação -->
+                    <div class="flex flex-col gap-4">
+                        <button onclick="shareWhatsApp()" class="w-full bg-[#25D366] text-white font-black py-6 rounded-3xl transition-all shadow-2xl shadow-green-100 active:scale-95 flex items-center justify-center gap-4 text-xl">
+                            <i data-lucide="message-circle" class="w-7 h-7"></i> Enviar via WhatsApp
                         </button>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
-                                <i data-lucide="file-down" class="w-5 h-5"></i>
-                                Salvar PDF
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-5 rounded-3xl transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-slate-200">
+                                <i data-lucide="printer" class="w-6 h-6 text-green-400"></i> Gerar PDF
                             </button>
-                            <button onclick="resetForm()" class="bg-white border border-slate-200 text-slate-400 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                Limpar
+                            <button onclick="showModalReset()" class="bg-white border border-slate-200 text-slate-400 font-bold py-5 rounded-3xl transition-all flex items-center justify-center gap-3 active:scale-95 hover:text-red-500 hover:border-red-100">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i> Limpar
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Preview Documento -->
-                <div class="sticky top-20">
-                    <div id="captureArea" class="receipt-preview rounded-[32px] p-4 md:p-8 transition-all">
-                        <div class="paper p-6 md:p-10 rounded-xl overflow-hidden flex flex-col justify-between">
-                            <div>
-                                <div class="flex justify-between items-start mb-10">
-                                    <div class="space-y-1">
-                                        <h3 id="previewVendor" class="text-2xl font-black text-slate-900 uppercase tracking-tighter">A Sua Empresa</h3>
-                                        <p class="text-green-600 text-[10px] font-black uppercase tracking-[0.2em]">Proposta Comercial</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p id="currentDateDisplay" class="text-xs font-bold text-slate-800">00/00/0000</p>
-                                    </div>
-                                </div>
-                                <div class="mb-8 border-l-4 border-green-500 bg-slate-50 p-4 rounded-r-lg">
-                                    <h4 id="previewClient" class="text-base font-extrabold text-slate-900">Nome do Cliente</h4>
-                                </div>
-                                <div class="border-t border-slate-100 py-6 min-h-[150px]">
-                                    <p id="previewService" class="text-sm text-slate-600 whitespace-pre-wrap">Descrição dos serviços...</p>
-                                </div>
-                            </div>
-                            <div class="mt-10 pt-6 border-t border-slate-900 flex justify-between items-end">
+                <!-- Preview Documento (Sticky no Desktop, Lado Direito) -->
+                <div class="lg:col-span-7 order-1 lg:order-2">
+                    <div class="lg:sticky lg:top-28">
+                        <div class="mb-6 flex items-center justify-between no-print px-4">
+                            <span class="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                                <i data-lucide="eye" class="w-4 h-4"></i> Pré-Visualização Real
+                            </span>
+                        </div>
+
+                        <div id="previewArea" class="receipt-preview rounded-[48px] p-2 sm:p-12 lg:p-16 border border-slate-100 transition-all shadow-inner">
+                            <div id="captureArea" class="paper rounded-lg p-8 sm:p-16 flex flex-col justify-between overflow-hidden">
                                 <div>
-                                    <p id="previewExpiry" class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1"></p>
-                                    <p class="text-[9px] text-green-600 font-black uppercase tracking-widest">ZapBudget Express</p>
+                                    <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-16">
+                                        <div class="space-y-2">
+                                            <h2 id="previewVendor" class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase break-words leading-none">SUA EMPRESA</h2>
+                                            <p class="text-green-600 text-[10px] font-black uppercase tracking-[0.3em]">Proposta de Orçamento</p>
+                                        </div>
+                                        <p id="currentDate" class="text-sm font-bold text-slate-400 border-b-2 border-slate-100 pb-1">00/00/0000</p>
+                                    </div>
+
+                                    <div class="mb-12 border-l-8 border-green-500 bg-slate-50 p-8 rounded-r-2xl">
+                                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Destinatário:</p>
+                                        <h3 id="previewClient" class="text-xl sm:text-2xl font-black text-slate-900 break-words tracking-tight">Nome do Cliente</h3>
+                                    </div>
+
+                                    <div class="space-y-8">
+                                        <div class="border-b-2 border-slate-100 pb-2">
+                                            <h4 class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Descrição do Projeto</h4>
+                                        </div>
+                                        <div id="previewService" class="text-slate-700 text-base whitespace-pre-wrap min-h-[150px] leading-relaxed font-medium">Os detalhes aparecerão aqui enquanto digita...</div>
+                                        
+                                        <div class="grid grid-cols-2 gap-8 pt-8 border-t border-slate-100">
+                                            <div>
+                                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Prazo Estimado</p>
+                                                <p id="previewDelivery" class="text-sm font-bold text-slate-800">-</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Pagamento</p>
+                                                <p id="previewPayment" class="text-sm font-bold text-slate-800">-</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-1">Total</p>
-                                    <p id="previewPrice" class="text-3xl font-black text-slate-900">R$ 0,00</p>
+
+                                <div class="mt-16">
+                                    <div class="pt-10 border-t-8 border-slate-900 flex flex-col sm:flex-row justify-between items-end gap-6">
+                                        <p id="previewExpiry" class="text-[10px] text-slate-400 font-black uppercase tracking-widest italic"></p>
+                                        <div class="text-right w-full sm:w-auto">
+                                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Investimento Total</p>
+                                            <p id="previewPrice" class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-12 pt-10 border-t border-slate-100 text-center">
+                                        <p id="previewVendorSignature" class="text-lg font-black text-slate-900 uppercase italic mb-2 tracking-tight"></p>
+                                        <div class="w-16 h-1.5 bg-green-500 mx-auto rounded-full mb-4"></div>
+                                        <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.5em]">Emitido via ZapBudget Pro</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -274,121 +395,146 @@
         </div>
     </section>
 
-    <!-- Rodapé Estruturado (Otimizado Mobile) -->
-    <footer class="bg-slate-950 text-slate-400 pt-20 no-print safe-bottom">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
-                
-                <!-- Coluna 1: Logo e Descrição -->
-                <div class="md:col-span-1 space-y-4">
-                    <div class="flex items-center justify-center md:justify-start gap-2">
-                        <div class="bg-green-600 p-1.5 rounded-lg text-white">
-                            <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
-                        </div>
-                        <span class="font-black text-white text-xl tracking-tight uppercase italic">Zap<span class="text-green-600">Budget</span></span>
-                    </div>
-                    <p class="text-sm leading-relaxed opacity-60">
-                        A solução definitiva para micro-empreendedores brasileiros que buscam profissionalismo e agilidade no WhatsApp.
-                    </p>
+    <!-- Rodapé Minimalista -->
+    <footer class="bg-slate-950 text-slate-500 pt-20 pb-16 no-print safe-bottom border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center gap-3 mb-8">
+                <div class="bg-green-600 p-2 rounded-xl text-white shadow-lg shadow-green-900/20">
+                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
                 </div>
-
-                <!-- Coluna 2: Produto -->
-                <div class="space-y-4">
-                    <h4 class="text-white font-black text-xs uppercase tracking-[0.2em]">Produto</h4>
-                    <ul class="space-y-3 text-sm font-medium">
-                        <li><a href="#app-section" class="hover:text-green-500 transition-colors">Gerador de Orçamentos</a></li>
-                        <li><a href="#pricing" class="hover:text-green-500 transition-colors">Planos e Preços</a></li>
-                        <li><a href="#beneficios" class="hover:text-green-500 transition-colors">Benefícios</a></li>
-                    </ul>
-                </div>
-
-                <!-- Coluna 3: Suporte & Legal -->
-                <div class="space-y-4">
-                    <h4 class="text-white font-black text-xs uppercase tracking-[0.2em]">Informações</h4>
-                    <ul class="space-y-3 text-sm font-medium">
-                        <li><a href="#" class="hover:text-green-500 transition-colors">Termos de Uso</a></li>
-                        <li><a href="#" class="hover:text-green-500 transition-colors">Privacidade</a></li>
-                        <li><a href="#" class="hover:text-green-500 transition-colors">Apoio ao Cliente</a></li>
-                    </ul>
-                </div>
-
-                <!-- Coluna 4: Contato & Social -->
-                <div class="space-y-6">
-                    <h4 class="text-white font-black text-xs uppercase tracking-[0.2em]">Contacto</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-center md:justify-start gap-3 text-sm">
-                            <i data-lucide="mail" class="w-4 h-4 text-green-600"></i>
-                            <span>suporte@zapbudget.com</span>
-                        </div>
-                        <div class="flex items-center justify-center md:justify-start gap-3 text-sm italic opacity-60">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                            <span>Guarulhos, SP - Brasil</span>
-                        </div>
-                    </div>
-                    <!-- Mock Socials -->
-                    <div class="flex items-center justify-center md:justify-start gap-4">
-                        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all">
-                            <i data-lucide="instagram" class="w-4 h-4"></i>
-                        </div>
-                        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all">
-                            <i data-lucide="facebook" class="w-4 h-4"></i>
-                        </div>
-                    </div>
-                </div>
+                <span class="font-black text-white text-2xl tracking-tighter uppercase italic">Zap<span class="text-green-600">Budget</span></span>
+            </div>
+            <p class="text-sm font-bold opacity-40 mb-12 max-w-md mx-auto leading-relaxed">A ferramenta líder para profissionais que levam a sério a sua imagem e as suas vendas.</p>
+            
+            <div class="flex justify-center gap-8 mb-12 opacity-30">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+                <i data-lucide="lock" class="w-6 h-6"></i>
+                <i data-lucide="award" class="w-6 h-6"></i>
             </div>
 
-            <!-- Copyright Line -->
-            <div class="mt-20 pt-10 border-t border-white/5 text-center">
-                <p class="text-[10px] font-black tracking-[0.3em] uppercase opacity-20">
-                    © 2026 ZapBudget SaaS. Feito com paixão em Guarulhos.
-                </p>
+            <div class="pt-12 border-t border-white/5">
+                <p class="text-[10px] font-black tracking-[0.4em] uppercase opacity-20">© 2026 ZapBudget SaaS · Guarulhos, São Paulo</p>
             </div>
         </div>
     </footer>
 
+    <!-- Modal de Limpeza (Estilo Mobile-First) -->
+    <div id="modalReset" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] hidden items-center justify-center p-6">
+        <div class="bg-white rounded-[40px] p-10 max-w-sm w-full shadow-2xl space-y-8 transform transition-all border border-slate-100">
+            <div class="bg-red-50 w-20 h-20 rounded-3xl flex items-center justify-center text-red-500 mx-auto shadow-inner">
+                <i data-lucide="trash-2" class="w-10 h-10"></i>
+            </div>
+            <div class="text-center space-y-3">
+                <h3 class="text-2xl font-black text-slate-900 tracking-tight">Limpar Orçamento?</h3>
+                <p class="text-slate-500 font-bold leading-relaxed">Todos os dados digitados serão perdidos permanentemente.</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button onclick="resetAll()" class="w-full bg-red-500 text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-red-100 active:scale-95">SIM, LIMPAR TUDO</button>
+                <button onclick="hideModalReset()" class="w-full bg-slate-100 text-slate-600 font-bold py-5 rounded-2xl transition-all active:scale-95">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">Concluído com sucesso!</div>
+
     <script>
         lucide.createIcons();
-        const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate'];
-        document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('pt-pt');
+        const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // Máscara de Moeda (Melhorada)
+        document.getElementById('totalValue').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, "");
+            value = (value / 100).toFixed(2) + "";
+            value = value.replace(".", ",");
+            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            e.target.value = value ? "R$ " + value : "";
+            updatePreview();
+        });
 
         function updatePreview() {
-            const vendor = document.getElementById('vendorName').value || 'A Sua Empresa';
-            const client = document.getElementById('clientName').value || 'Nome do Cliente';
-            const service = document.getElementById('serviceDescription').value || 'Descrição dos serviços...';
-            const price = document.getElementById('totalValue').value;
-            const expiry = document.getElementById('expiryDate').value;
+            const data = {};
+            inputs.forEach(id => { 
+                const el = document.getElementById(id);
+                if(el) data[id] = el.value; 
+            });
 
-            document.getElementById('previewVendor').innerText = vendor;
-            document.getElementById('previewClient').innerText = client;
-            document.getElementById('previewService').innerText = service;
-            document.getElementById('previewPrice').innerText = price ? 'R$ ' + parseFloat(price).toLocaleString('pt-pt', {minimumFractionDigits: 2}) : 'R$ 0,00';
-            
-            if (expiry) {
-                const [ano, mes, dia] = expiry.split('-');
-                document.getElementById('previewExpiry').innerText = `Válido até: ${dia}/${mes}/${ano}`;
+            document.getElementById('previewVendor').innerText = data.vendorName || 'SUA EMPRESA';
+            document.getElementById('previewVendorSignature').innerText = data.vendorName || 'SUA EMPRESA';
+            document.getElementById('previewClient').innerText = data.clientName || 'Nome do Cliente';
+            document.getElementById('previewService').innerText = data.serviceDescription || 'Os detalhes aparecerão aqui enquanto digita...';
+            document.getElementById('previewPrice').innerText = data.totalValue || 'R$ 0,00';
+            document.getElementById('previewDelivery').innerText = data.deliveryTime || '-';
+            document.getElementById('previewPayment').innerText = data.paymentMethod || '-';
+
+            if (data.expiryDate) {
+                const [ano, mes, dia] = data.expiryDate.split('-');
+                document.getElementById('previewExpiry').innerText = `VÁLIDO ATÉ: ${dia}/${mes}/${ano}`;
             } else {
                 document.getElementById('previewExpiry').innerText = '';
             }
         }
 
-        inputs.forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
+        // Event listeners para todos os campos
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if(el && id !== 'totalValue') {
+                el.addEventListener('input', updatePreview);
+            }
+        });
 
         function shareWhatsApp() {
-            const vendor = document.getElementById('vendorName').value || 'Empresa';
-            const client = document.getElementById('clientName').value;
-            const price = document.getElementById('totalValue').value;
-            if (!client || !price) return alert("Preencha cliente e valor!");
+            const v = document.getElementById('vendorName').value || 'Minha Empresa';
+            const c = document.getElementById('clientName').value;
+            const p = document.getElementById('totalValue').value;
+            const s = document.getElementById('serviceDescription').value;
+            const d = document.getElementById('deliveryTime').value;
+            const pay = document.getElementById('paymentMethod').value;
+            const exp = document.getElementById('expiryDate').value;
+
+            if (!c || !p) return showToast("⚠️ Por favor, informe o cliente e o valor!");
+
+            let expStr = "";
+            if (exp) {
+                const [ano, mes, dia] = exp.split('-');
+                expStr = `\n⏳ *Validade:* ${dia}/${mes}/${ano}`;
+            }
+
+            const msg = `📄 *PROPOSTA COMERCIAL*\n---------------------------------\n🏢 *De:* ${v}\n👤 *Cliente:* ${c}\n\n📝 *Serviço:* \n${s || 'Ver detalhes em anexo'}\n\n🚚 *Prazo:* ${d || 'A combinar'}\n💳 *Pagamento:* ${pay || 'A combinar'}\n\n💰 *Total:* ${p}${expStr}\n---------------------------------\n✅ *Fico a aguardar o seu retorno!*`;
             
-            const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n🏢 *De:* ${vendor}\n👤 *Para:* ${client}\n💰 *Valor:* R$ ${price}\n\n✅ Aguardo o seu retorno!`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function resetForm() {
-            if (confirm("Limpar dados?")) {
-                inputs.forEach(id => document.getElementById(id).value = '');
-                updatePreview();
-            }
+        function showModalReset() {
+            document.getElementById('modalReset').classList.remove('hidden');
+            document.getElementById('modalReset').classList.add('flex');
         }
+
+        function hideModalReset() {
+            document.getElementById('modalReset').classList.add('hidden');
+            document.getElementById('modalReset').classList.remove('flex');
+        }
+
+        function resetAll() {
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.value = '';
+            });
+            updatePreview();
+            hideModalReset();
+            showToast("✨ Orçamento limpo!");
+        }
+
+        // Inicialização
+        updatePreview();
     </script>
 </body>
 </html>
