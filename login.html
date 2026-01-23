@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Entrar - ZapBudget</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="./img/favicon (3).png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+        }
+        
+        button {
+            min-height: 54px;
+        }
+
+        .auth-card {
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col items-center justify-center p-6">
+
+    <!-- Botão Voltar -->
+    <a href="index.html" class="absolute top-8 left-6 md:left-12 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-900 transition-all group">
+        <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i> 
+        Voltar para o site
+    </a>
+
+    <div class="w-full max-w-md space-y-8 auth-card">
+        <!-- Logo -->
+        <div class="text-center">
+            <div class="bg-green-600 w-16 h-16 rounded-2xl text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-100">
+                <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
+            </div>
+            <h2 id="auth-title" class="text-3xl font-black text-slate-900 tracking-tight italic uppercase">Zap<span class="text-green-600">Budget</span></h2>
+            <p id="auth-subtitle" class="text-slate-500 mt-2 font-medium">Aceda à sua conta profissional.</p>
+        </div>
+
+        <!-- Card de Autenticação -->
+        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-2xl shadow-slate-200/40">
+            <form onsubmit="handleAuth(event)" class="space-y-6">
+                
+                <!-- Campos extras para Registo (Ocultos por padrão) -->
+                <div id="register-fields" class="hidden space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome da Empresa / Profissional</label>
+                        <input type="text" id="auth-name" placeholder="Ex: João Silva Reformas" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                    </div>
+                </div>
+
+                <!-- E-mail -->
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="seu@email.com" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                </div>
+
+                <!-- Palavra-passe -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Palavra-passe</label>
+                        <a href="#" class="text-[10px] font-bold text-green-600 uppercase tracking-widest hover:underline">Esqueceu-se?</a>
+                    </div>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                </div>
+
+                <!-- Botão Principal -->
+                <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-2">
+                    ENTRAR NA CONTA
+                </button>
+            </form>
+
+            <!-- Divisor de Modo (Login/Registo) -->
+            <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                <p id="auth-toggle-text" class="text-sm font-medium text-slate-500">
+                    Ainda não tem conta? 
+                    <button onclick="toggleAuthMode()" class="text-green-600 font-bold hover:underline">Registe-se agora</button>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer do Login -->
+        <div class="text-center space-y-4">
+            <p class="text-[10px] font-black tracking-[0.3em] uppercase opacity-20 text-slate-950">
+                Segurança Garantida ZapBudget
+            </p>
+            <div class="flex items-center justify-center gap-4 opacity-40">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                <i data-lucide="lock" class="w-4 h-4"></i>
+                <i data-lucide="smartphone" class="w-4 h-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        let isRegister = false;
+
+        function toggleAuthMode() {
+            isRegister = !isRegister;
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+            const btn = document.getElementById('auth-btn');
+            const toggleText = document.getElementById('auth-toggle-text');
+            const registerFields = document.getElementById('register-fields');
+
+            if (isRegister) {
+                subtitle.innerText = "Crie a sua conta e profissionalize-se.";
+                btn.innerText = "CRIAR MINHA CONTA";
+                toggleText.innerHTML = 'Já tem uma conta? <button onclick="toggleAuthMode()" class="text-green-600 font-bold hover:underline">Inicie sessão</button>';
+                registerFields.classList.remove('hidden');
+                // Scroll suave para mostrar os novos campos no mobile
+                registerFields.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                subtitle.innerText = "Aceda à sua conta profissional.";
+                btn.innerText = "ENTRAR NA CONTA";
+                toggleText.innerHTML = 'Ainda não tem conta? <button onclick="toggleAuthMode()" class="text-green-600 font-bold hover:underline">Registe-se agora</button>';
+                registerFields.classList.add('hidden');
+            }
+        }
+
+        function handleAuth(e) {
+            e.preventDefault();
+            const btn = document.getElementById('auth-btn');
+            const originalText = btn.innerHTML;
+            
+            // Feedback Visual de Carregamento
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A PROCESSAR...`;
+            lucide.createIcons();
+
+            // Simulação de autenticação
+            setTimeout(() => {
+                btn.classList.replace('bg-green-600', 'bg-slate-900');
+                btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    // Redireciona para o painel principal ou index
+                    window.location.href = "index.html"; 
+                }, 800);
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
