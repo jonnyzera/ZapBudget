@@ -17,7 +17,6 @@
         .receipt-preview {
             background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
             background-size: 20px 20px;
-            /* Garante que o conteúdo não transborde */
             overflow-x: hidden;
         }
 
@@ -25,7 +24,6 @@
             background: white;
             position: relative;
             box-shadow: 0 20px 50px rgba(0,0,0,0.05);
-            /* Ajuste para garantir enquadramento em telas pequenas */
             width: 100%;
             max-width: 100%;
         }
@@ -33,9 +31,7 @@
         .paper::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 4px;
             background: linear-gradient(90deg, #22c55e, #16a34a);
         }
@@ -53,7 +49,6 @@
             .paper { box-shadow: none !important; border: 1px solid #eee; margin: 0; width: 100%; min-height: auto; }
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -62,7 +57,6 @@
 </head>
 <body class="bg-[#f8fafc] text-slate-900 min-h-screen">
 
-    <!-- Header Simples -->
     <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -80,7 +74,6 @@
     <main class="max-w-7xl mx-auto px-4 py-8 lg:py-12">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
-            <!-- Coluna do Formulário -->
             <div class="lg:col-span-5 space-y-8 no-print">
                 <div class="space-y-2">
                     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Criar Orçamento</h1>
@@ -88,7 +81,6 @@
                 </div>
 
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6">
-                    <!-- Identificação -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="user" class="w-4 h-4"></i> Identificação
@@ -105,7 +97,6 @@
                         </div>
                     </div>
 
-                    <!-- Serviço -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="briefcase" class="w-4 h-4"></i> Detalhes do Serviço
@@ -126,7 +117,6 @@
                         </div>
                     </div>
 
-                    <!-- Valores -->
                     <div class="space-y-4 pt-2">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="dollar-sign" class="w-4 h-4"></i> Valor e Validade
@@ -144,21 +134,17 @@
                     </div>
                 </div>
 
-                <!-- Ações Reordenadas -->
                 <div class="flex flex-col gap-3">
-                    <!-- PDF primeiro conforme solicitado -->
                     <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-5 rounded-2xl transition-all shadow-lg shadow-slate-200/50 flex items-center justify-center gap-3 text-lg active:scale-[0.98]">
                         <i data-lucide="printer" class="w-6 h-6 text-green-400"></i>
                         Gerar PDF / Imprimir
                     </button>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- Botão de WhatsApp (Salvar/Enviar) -->
-                        <button onclick="shareWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-green-100 active:scale-[0.98]">
+                        <button id="btnZap" onclick="shareWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-green-100 active:scale-[0.98]">
                             <i data-lucide="message-circle" class="w-5 h-5"></i> Enviar WhatsApp
                         </button>
                         
-                        <!-- Limpar -->
                         <button onclick="showModalReset()" class="w-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Limpar Tudo
                         </button>
@@ -166,7 +152,6 @@
                 </div>
             </div>
 
-            <!-- Coluna do Preview -->
             <div class="lg:col-span-7">
                 <div class="sticky top-24">
                     <div class="mb-4 flex items-center justify-between no-print px-2 sm:px-0">
@@ -176,11 +161,8 @@
                         <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase">Enquadramento Automático</span>
                     </div>
 
-                    <!-- Área de Visualização com ajuste de overflow e padding mobile -->
                     <div id="previewArea" class="receipt-preview rounded-[24px] sm:rounded-[32px] p-3 sm:p-8 lg:p-12 border border-slate-200 transition-all overflow-hidden">
                         <div class="paper rounded-sm p-6 sm:p-12 min-h-[600px] flex flex-col justify-between overflow-hidden">
-                            
-                            <!-- Cabeçalho -->
                             <div>
                                 <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-12">
                                     <div class="space-y-2">
@@ -195,13 +177,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Cliente -->
                                 <div class="mb-12 border-l-4 border-green-500 bg-slate-50 p-6 rounded-r-xl">
                                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Para:</p>
                                     <h3 id="previewClient" class="text-lg sm:text-xl font-bold text-slate-900 break-words">Nome do Cliente</h3>
                                 </div>
 
-                                <!-- Itens -->
                                 <div class="space-y-6">
                                     <div class="border-b-2 border-slate-100 pb-2">
                                         <h4 class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Serviços / Produtos</h4>
@@ -210,7 +190,6 @@
                                         Os detalhes aparecerão aqui...
                                     </div>
                                     
-                                    <!-- Condições -->
                                     <div class="grid grid-cols-2 gap-4 sm:gap-8 pt-8 border-t border-slate-100">
                                         <div>
                                             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Prazo</p>
@@ -224,7 +203,6 @@
                                 </div>
                             </div>
 
-                            <!-- Rodapé -->
                             <div class="mt-12 space-y-12">
                                 <div class="pt-8 border-t-4 border-slate-900 flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4">
                                     <div class="order-2 sm:order-1 text-left w-full sm:w-auto">
@@ -236,7 +214,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Assinatura -->
                                 <div class="pt-8 border-t border-slate-100 flex flex-col items-center text-center">
                                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Atenciosamente,</p>
                                     <p id="previewVendorSignature" class="text-sm sm:text-base font-extrabold text-slate-900 uppercase italic"></p>
@@ -251,7 +228,6 @@
         </div>
     </main>
 
-    <!-- Modal de Reset -->
     <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
             <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
@@ -270,8 +246,11 @@
 
     <script>
         lucide.createIcons();
-
+        
+        // --- CONFIGURAÇÃO DA API ---
+        const API_URL = "http://127.0.0.1:8000"; // Altere quando fizer o deploy (ex: Render ou Railway)
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
+        
         const hoje = new Date().toLocaleDateString('pt-BR');
         document.getElementById('currentDate').innerText = hoje;
 
@@ -313,43 +292,67 @@
             }
         });
 
-        function shareWhatsApp() {
-            const vendor = document.getElementById('vendorName').value || 'Minha Empresa';
-            const client = document.getElementById('clientName').value;
-            const service = document.getElementById('serviceDescription').value;
-            const price = document.getElementById('totalValue').value;
-            const expiry = document.getElementById('expiryDate').value;
-            const delivery = document.getElementById('deliveryTime').value;
-            const payment = document.getElementById('paymentMethod').value;
+        // --- INTEGRAÇÃO COM BACKEND ---
+        async function shareWhatsApp() {
+            const btn = document.getElementById('btnZap');
+            const originalContent = btn.innerHTML;
+            
+            const payload = {
+                vendor_name: document.getElementById('vendorName').value || 'Profissional',
+                client_name: document.getElementById('clientName').value,
+                servicos: document.getElementById('serviceDescription').value,
+                valor: document.getElementById('totalValue').value,
+                prazo: document.getElementById('deliveryTime').value,
+                pagamento: document.getElementById('paymentMethod').value,
+                validade: document.getElementById('expiryDate').value
+            };
 
-            if (!client || !price) {
-                alert("Por favor, preencha o Cliente e o Valor Total.");
+            if (!payload.client_name || !payload.valor) {
+                alert("Por favor, preencha o Nome do Cliente e o Valor Total.");
                 return;
             }
 
-            let validadeStr = "";
-            if (expiry) {
-                const [ano, mes, dia] = expiry.split('-');
-                validadeStr = `\n⏳ *Válido até:* ${dia}/${mes}/${ano}`;
-            }
+            try {
+                btn.disabled = true;
+                btn.innerText = "Gerando Link...";
 
-            const mensagem = 
+                // 1. Salvar no Banco via FastAPI
+                const response = await fetch(`${API_URL}/salvar-orcamento`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error("Erro ao salvar orçamento");
+                
+                const result = await response.json();
+                
+                // 2. Criar Link de Visualização (deve apontar para seu view.html no futuro)
+                const linkVisualizacao = `https://zapbudget.site/view.html?id=${result.id}`;
+
+                // 3. Formatar Mensagem
+                const mensagem = 
 `📄 *ORÇAMENTO PROFISSIONAL*
 ---------------------------------
-🏢 *De:* ${vendor}
-👤 *Cliente:* ${client}
+🏢 *De:* ${payload.vendor_name}
+👤 *Cliente:* ${payload.client_name}
+💰 *Investimento:* ${payload.valor}
 
-📝 *Serviço:*
-${service}
+🔗 *Ver Orçamento Completo:*
+${linkVisualizacao}
 
-🚚 *Prazo:* ${delivery || 'A combinar'}
-💳 *Pagamento:* ${payment || 'A combinar'}
-
-💰 *Investimento:* ${price}${validadeStr}
 ---------------------------------
 ✅ *Aguardo seu retorno para iniciarmos!*`;
 
-            window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+                window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao conectar com o servidor. Verifique se o Back-end está rodando.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
         }
 
         function showModalReset() {
