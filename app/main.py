@@ -6,20 +6,19 @@ import os
 
 app = FastAPI()
 
-# Permite que seu site (frontend) acesse esta API
+# Permite que o seu site aceda à API (CORS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Em produção, coloque o domínio do seu site
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Substitua pelas credenciais que aparecem em Settings > API no seu Supabase
-SUPABASE_URL = "SUA_URL_AQUI"
-SUPABASE_KEY = "SUA_CHAVE_ANON_PUBLIC_AQUI"
+# Credenciais do Supabase
+SUPABASE_URL = "SUA_URL_DO_SUPABASE"
+SUPABASE_KEY = "SUA_KEY_DO_SUPABASE"
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Modelo de dados que a API espera receber
 class Orcamento(BaseModel):
     vendor_name: str
     client_name: str
@@ -29,21 +28,19 @@ class Orcamento(BaseModel):
     pagamento: str = None
     validade: str = None
 
-@app.post("/salvar-orcamento")
-async def salvar(dados: Orcamento):
+@app.post("/orcamentos")
+async def salvar_orcamento(dados: Orcamento):
     try:
-        # Insere os dados na tabela que você criou no Supabase
+        # Insere na tabela 'orçamentos' e retorna o ID
         res = supabase.table("orçamentos").insert(dados.dict()).execute()
-        
-        # Retorna o ID do orçamento recém-criado
         return {"id": res.data[0]['id']}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/orcamento/{id}")
-async def buscar(id: str):
+@app.get("/orcamentos/{id}")
+async def buscar_orcamento(id: str):
     try:
-        # Busca um orçamento específico pelo ID
+        # Busca o orçamento pelo ID único
         res = supabase.table("orçamentos").select("*").eq("id", id).single().execute()
         return res.data
     except Exception as e:
