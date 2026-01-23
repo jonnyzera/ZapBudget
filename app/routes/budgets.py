@@ -1,17 +1,24 @@
-from fastapi import APIRouter, Header
-from app.models.budget import BudgetCreate
-from supabase import create_client
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
+from weasyprint import HTML
+import tempfile
 
 router = APIRouter()
 
-@router.post("/create")
-async def create_budget(budget: BudgetCreate, authorization: str = Header(None)):
-    # Lógica para salvar no Supabase
-    # O Supabase já lida com a persistência de forma segura
-    pass
-
 @router.get("/{budget_id}/pdf")
 async def generate_pdf(budget_id: str):
-    # Aqui você usaria o WeasyPrint para transformar seu HTML em PDF
-    # e retornaria o arquivo para download
-    pass
+    try:
+        # 1. Aqui você buscaria os dados do Supabase usando o budget_id
+        # 2. Renderizaria um template HTML com esses dados
+        html_content = f"<h1>Orçamento {budget_id}</h1><p>Dados do orçamento aqui...</p>"
+        
+        # 3. Gerar o PDF
+        pdf = HTML(string=html_content).write_pdf()
+        
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=orcamento_{budget_id}.pdf"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

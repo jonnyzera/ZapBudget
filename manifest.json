@@ -1,0 +1,17 @@
+{
+  "name": "ZapBudget - Orçamentos Profissionais",
+  "short_name": "ZapBudget",
+  "description": "Gere orçamentos profissionais e envie diretamente pelo WhatsApp.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "./app/templates/img/favicon (3).png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

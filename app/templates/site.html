@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ZapBudget - Orçamentos Profissionais</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,6 +12,7 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             scroll-behavior: smooth;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .receipt-preview {
@@ -173,7 +174,7 @@
                                     </div>
                                     <div class="text-left sm:text-right">
                                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Emissão</p>
-                                        <p id="currentDate" class="text-sm font-bold text-slate-800">00/00/0000</p>
+                                        <p id="currentDate" class="text-sm font-bold text-slate-800">22/01/2026</p>
                                     </div>
                                 </div>
 
@@ -247,8 +248,7 @@
     <script>
         lucide.createIcons();
         
-        // --- CONFIGURAÇÃO DA API ---
-        const API_URL = "http://127.0.0.1:8000"; // Altere quando fizer o deploy (ex: Render ou Railway)
+        const API_URL = "http://127.0.0.1:8000";
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         
         const hoje = new Date().toLocaleDateString('pt-BR');
@@ -292,7 +292,6 @@
             }
         });
 
-        // --- INTEGRAÇÃO COM BACKEND ---
         async function shareWhatsApp() {
             const btn = document.getElementById('btnZap');
             const originalContent = btn.innerHTML;
@@ -316,8 +315,7 @@
                 btn.disabled = true;
                 btn.innerText = "Gerando Link...";
 
-                // 1. Salvar no Banco via FastAPI
-                const response = await fetch(`${API_URL}/salvar-orcamento`, {
+                const response = await fetch(`${API_URL}/orcamentos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -326,11 +324,8 @@
                 if (!response.ok) throw new Error("Erro ao salvar orçamento");
                 
                 const result = await response.json();
-                
-                // 2. Criar Link de Visualização (deve apontar para seu view.html no futuro)
                 const linkVisualizacao = `https://zapbudget.site/view.html?id=${result.id}`;
 
-                // 3. Formatar Mensagem
                 const mensagem = 
 `📄 *ORÇAMENTO PROFISSIONAL*
 ---------------------------------
@@ -352,6 +347,7 @@ ${linkVisualizacao}
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
+                lucide.createIcons();
             }
         }
 

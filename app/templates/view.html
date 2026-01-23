@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamento Profissional - ZapBudget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .paper {
+            background: white;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 800px;
+            margin: 2rem auto;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .paper::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .paper { box-shadow: none; margin: 0; width: 100%; border: 1px solid #eee; }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="max-w-[800px] mx-auto mb-6 flex justify-between items-center no-print">
+        <div class="flex items-center gap-2">
+            <div class="bg-green-600 p-1.5 rounded-lg text-white">
+                <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+            </div>
+            <span class="font-bold text-lg text-slate-900">Zap<span class="text-green-600">Budget</span></span>
+        </div>
+        <button onclick="window.print()" class="bg-slate-900 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg">
+            <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+        </button>
+    </div>
+
+    <div id="loader" class="text-center py-20">
+        <div class="animate-spin inline-block w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mb-4"></div>
+        <p class="text-slate-500 font-bold">Carregando orçamento...</p>
+    </div>
+
+    <div id="content" class="paper p-8 sm:p-16 hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-16">
+            <div class="space-y-2">
+                <h2 id="viewVendor" class="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">---</h2>
+                <p class="text-green-600 text-[10px] font-black uppercase tracking-[0.3em]">Proposta Comercial</p>
+            </div>
+            <div class="text-left sm:text-right">
+                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Data de Emissão</p>
+                <p id="viewDate" class="text-sm font-bold text-slate-800">--/--/----</p>
+            </div>
+        </div>
+
+        <div class="mb-12 border-l-8 border-green-500 bg-slate-50 p-8 rounded-r-2xl">
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Destinatário:</p>
+            <h3 id="viewClient" class="text-2xl font-black text-slate-900 tracking-tight">---</h3>
+        </div>
+
+        <div class="space-y-8">
+            <div class="border-b-2 border-slate-100 pb-2">
+                <h4 class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Descrição dos Serviços</h4>
+            </div>
+            <div id="viewService" class="text-slate-700 text-base whitespace-pre-wrap leading-relaxed min-h-[150px]">---</div>
+            
+            <div class="grid grid-cols-2 gap-8 pt-8 border-t border-slate-100">
+                <div>
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Prazo Estimado</p>
+                    <p id="viewDelivery" class="text-sm font-bold text-slate-800">---</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Forma de Pagamento</p>
+                    <p id="viewPayment" class="text-sm font-bold text-slate-800">---</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-16">
+            <div class="pt-10 border-t-8 border-slate-900 flex flex-col sm:flex-row justify-between items-end gap-6">
+                <p id="viewExpiry" class="text-[10px] text-red-500 font-black uppercase tracking-widest italic"></p>
+                <div class="text-right w-full sm:w-auto">
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Investimento Total</p>
+                    <p id="viewPrice" class="text-5xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="mt-12 pt-10 border-t border-slate-100 text-center">
+                <p id="viewVendorSignature" class="text-lg font-black text-slate-900 uppercase italic mb-2 tracking-tight"></p>
+                <div class="w-16 h-1.5 bg-green-500 mx-auto rounded-full mb-4"></div>
+                <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.5em]">Documento Oficial ZapBudget</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const API_URL = "http://127.0.0.1:8000";
+
+        async function carregarOrcamento() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) {
+                document.getElementById('loader').innerHTML = "<p class='text-red-500 font-bold'>Erro: ID do orçamento não encontrado.</p>";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/orcamentos/${id}`);
+                if (!response.ok) throw new Error();
+                
+                const data = await response.json();
+
+                // Preencher campos
+                document.getElementById('viewVendor').innerText = data.vendor_name;
+                document.getElementById('viewVendorSignature').innerText = data.vendor_name;
+                document.getElementById('viewClient').innerText = data.client_name;
+                document.getElementById('viewService').innerText = data.servicos;
+                document.getElementById('viewPrice').innerText = data.valor;
+                document.getElementById('viewDelivery').innerText = data.prazo || 'A combinar';
+                document.getElementById('viewPayment').innerText = data.pagamento || 'A combinar';
+                document.getElementById('viewDate').innerText = new Date(data.created_at).toLocaleDateString('pt-BR');
+
+                if (data.validade) {
+                    const [ano, mes, dia] = data.validade.split('-');
+                    document.getElementById('viewExpiry').innerText = `VÁLIDO ATÉ: ${dia}/${mes}/${ano}`;
+                }
+
+                // Mostrar conteúdo
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+
+            } catch (error) {
+                document.getElementById('loader').innerHTML = "<p class='text-red-500 font-bold'>Erro ao carregar os dados. O orçamento pode ter expirado ou não existe.</p>";
+            }
+        }
+
+        carregarOrcamento();
+    </script>
+</body>
+</html>

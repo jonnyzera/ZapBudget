@@ -6,7 +6,7 @@ import os
 
 app = FastAPI()
 
-# Permite que o seu site aceda à API (CORS)
+# Configuração de CORS para permitir que o front-end acesse a API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,9 +14,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Credenciais do Supabase
-SUPABASE_URL = "SUA_URL_DO_SUPABASE"
-SUPABASE_KEY = "SUA_KEY_DO_SUPABASE"
+# Credenciais do Supabase (Usando os.getenv para segurança)
+# Substitua no seu ambiente ou arquivo .env:
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://oqafestnsewmigjeozeh.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_hR1cOLUTK0is6yOiNfWnKQ_5xz7bDXI")
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 class Orcamento(BaseModel):
@@ -33,6 +35,8 @@ async def salvar_orcamento(dados: Orcamento):
     try:
         # Insere na tabela 'orçamentos' e retorna o ID
         res = supabase.table("orçamentos").insert(dados.dict()).execute()
+        if not res.data:
+             raise HTTPException(status_code=500, detail="Erro ao inserir dados")
         return {"id": res.data[0]['id']}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
