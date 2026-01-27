@@ -19,7 +19,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             scroll-behavior: smooth;
             -webkit-tap-highlight-color: transparent;
-            padding-bottom: 80px; /* Espaço para a nav inferior no mobile */
+            padding-bottom: 80px; 
         }
 
         .receipt-preview {
@@ -56,14 +56,12 @@
             .paper { box-shadow: none !important; border: 1px solid #eee; margin: 0; width: 100%; min-height: auto; }
         }
 
-        /* Animação do Modal */
         .modal-enter { animation: modalFadeIn 0.3s ease-out; }
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900 min-h-screen">
 
-    <!-- NAV SUPERIOR -->
     <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -81,7 +79,6 @@
     <main class="max-w-7xl mx-auto px-4 py-8 lg:py-12">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
-            <!-- FORMULÁRIO -->
             <div class="lg:col-span-5 space-y-8 no-print">
                 <div class="space-y-2">
                     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Criar Orçamento</h1>
@@ -89,7 +86,6 @@
                 </div>
 
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6">
-                    <!-- Identificação -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="user" class="w-4 h-4"></i> Identificação
@@ -106,7 +102,6 @@
                         </div>
                     </div>
 
-                    <!-- Detalhes do Serviço -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="briefcase" class="w-4 h-4"></i> Detalhes do Serviço
@@ -127,7 +122,6 @@
                         </div>
                     </div>
 
-                    <!-- Valor e Validade -->
                     <div class="space-y-4 pt-2">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="dollar-sign" class="w-4 h-4"></i> Valor e Validade
@@ -163,7 +157,6 @@
                 </div>
             </div>
 
-            <!-- PREVIEW -->
             <div class="lg:col-span-7">
                 <div class="sticky top-24">
                     <div class="mb-4 flex items-center justify-between no-print px-2 sm:px-0">
@@ -185,7 +178,7 @@
                                     </div>
                                     <div class="text-left sm:text-right">
                                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Emissão</p>
-                                        <p id="currentDate" class="text-sm font-bold text-slate-800">26/01/2026</p>
+                                        <p id="currentDate" class="text-sm font-bold text-slate-800">--/--/----</p>
                                     </div>
                                 </div>
 
@@ -240,23 +233,22 @@
         </div>
     </main>
 
-    <!-- BOTTOM NAVIGATION (PWA Mobile) -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden no-print">
         <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-green-600">
             <i data-lucide="plus-circle" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Novo</span>
         </button>
-        <button onclick="showAuthModal()" class="flex flex-col items-center gap-1 text-slate-400">
+        <button onclick="window.location.href='historico.html'" class="flex flex-col items-center gap-1 text-slate-400">
             <i data-lucide="history" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Histórico</span>
         </button>
-        <button onclick="showAuthModal()" class="flex flex-col items-center gap-1 text-slate-400">
+        <button onclick="window.location.href='pro.html'" class="flex flex-col items-center gap-1 text-slate-400">
             <i data-lucide="crown" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Pro</span>
         </button>
     </div>
 
-    <!-- MODAL DE AUTENTICAÇÃO -->
+    <!-- MODAIS -->
     <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter">
             <div class="text-center space-y-2">
@@ -277,7 +269,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE UPGRADE -->
     <div id="upgradeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter border-t-8 border-green-500 text-center">
             <h3 class="text-2xl font-black text-slate-900">Seu Trial Expirou ⏳</h3>
@@ -288,7 +279,6 @@
         </div>
     </div>
 
-    <!-- MODAL RESET -->
     <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
             <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
@@ -303,18 +293,17 @@
     </div>
 
     <script>
-        // CONFIGURAÇÕES SUPABASE
+        // CONFIGURAÇÕES SUPABASE ATUALIZADAS
         const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_hR1cOLUTK0is6yOiNfWnKQ_5xz7bDXI";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const API_URL = "http://127.0.0.1:8000";
         let currentUser = null;
 
         lucide.createIcons();
 
-        // 1. MONITORAR AUTENTICAÇÃO
-        supabase.auth.onAuthStateChange((event, session) => {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
             currentUser = session?.user || null;
             updateUserNav();
         });
@@ -331,7 +320,6 @@
             }
         }
 
-        // 2. MÁSCARA E PREVIEW
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
 
@@ -367,7 +355,6 @@
             }
         });
 
-        // 3. AÇÕES
         async function handleMainAction() {
             if (!currentUser) { showAuthModal(); return; }
             await shareWhatsApp();
@@ -416,15 +403,14 @@
             }
         }
 
-        // AUTH LOGIC
         async function processAuth() {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPass').value;
             if (!email || !password) return alert("Preencha!");
             
-            let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) {
-                const reg = await supabase.auth.signUp({ email, password });
+                const reg = await supabaseClient.auth.signUp({ email, password });
                 if (reg.error) alert(reg.error.message);
                 else alert("Verifique seu e-mail!");
             }
@@ -436,7 +422,7 @@
         function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
         function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
         function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
-        async function handleLogout() { await supabase.auth.signOut(); location.reload(); }
+        async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
         function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
         function goToStripe() { window.location.href = "SEU_LINK_DO_STRIPE"; }
     </script>

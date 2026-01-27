@@ -3,11 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
+from dotenv import load_dotenv
+
+# Carrega as variáveis do ficheiro .env para o sistema
+load_dotenv()
 
 app = FastAPI()
 
-# Configuração de CORS
+# Configuração de CORS para permitir acesso de qualquer origem
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,14 +19,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Credenciais do Supabase
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://oqafestnsewmigjeozeh.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_hR1cOLUTK0is6yOiNfWnKQ_5xz7bDXI")
+# Credenciais obtidas de forma segura através do ambiente (.env)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+# No backend, usamos a SERVICE_ROLE_KEY para ignorar políticas de RLS ao gerir perfis
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("Erro: Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não encontradas.")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 class Orcamento(BaseModel):
-    user_id: str  # ID do usuário logado (obrigatório para o SaaS)
+    user_id: str
     vendor_name: str
     client_name: str
     servicos: str
@@ -34,11 +42,11 @@ class Orcamento(BaseModel):
 @app.post("/orcamentos")
 async def salvar_orcamento(dados: Orcamento):
     try:
-        # 1. Buscar o perfil do usuário para validar o acesso
+        # 1. Verificar/Criar o perfil do utilizador
         res_profile = supabase.table("profiles").select("*").eq("id", dados.user_id).single().execute()
         
         if not res_profile.data:
-            # Caso o perfil não exista, podemos criar um trial automático a partir de hoje
+            # Criação de trial automático de 7 dias
             new_profile = {
                 "id": dados.user_id,
                 "trial_start": datetime.utcnow().isoformat(),
@@ -51,7 +59,8 @@ async def salvar_orcamento(dados: Orcamento):
 
         # 2. Validar período de 7 dias ou Assinatura Premium
         is_premium = profile.get("is_premium", False)
-        trial_start = datetime.fromisoformat(profile["trial_start"].replace("Z", "+00:00"))
+        trial_start_str = profile["trial_start"].replace("Z", "+00:00")
+        trial_start = datetime.fromisoformat(trial_start_str)
         hoje = datetime.utcnow().astimezone()
 
         if not is_premium:
@@ -59,14 +68,14 @@ async def salvar_orcamento(dados: Orcamento):
             if dias_de_uso > 7:
                 raise HTTPException(
                     status_code=402, 
-                    detail="Seu período de 7 dias grátis acabou. Assine o Pro para continuar enviando orçamentos!"
+                    detail="O seu período de 7 dias grátis terminou. Assine o Pro para continuar!"
                 )
 
-        # 3. Salvar o orçamento vinculado ao usuário
+        # 3. Guardar o orçamento no banco de dados
         res_budget = supabase.table("orçamentos").insert(dados.dict()).execute()
         
         if not res_budget.data:
-             raise HTTPException(status_code=500, detail="Erro ao salvar no banco de dados")
+             raise HTTPException(status_code=500, detail="Erro ao guardar no banco de dados")
              
         return {"id": res_budget.data[0]['id']}
 
@@ -78,7 +87,6 @@ async def salvar_orcamento(dados: Orcamento):
 @app.get("/orcamentos/{id}")
 async def buscar_orcamento(id: str):
     try:
-        # A visualização do orçamento continua pública para que o cliente possa abrir o link
         res = supabase.table("orçamentos").select("*").eq("id", id).single().execute()
         return res.data
     except Exception:
