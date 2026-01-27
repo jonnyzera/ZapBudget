@@ -1,0 +1,48 @@
+--- SEGURANÇA ---
+
+Nunca remover esta linha. Impede o envio das chaves do Supabase.
+
+.env
+
+--- PYTHON ---
+
+Ficheiros compilados e cache do Python
+
+pycache/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+--- AMBIENTES VIRTUAIS ---
+
+Pastas onde as bibliotecas são instaladas localmente
+
+venv/
+env/
+.venv/
+ENV/
+
+--- EDITORES E IDEs ---
+
+Configurações específicas do VS Code, PyCharm, etc.
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+--- SISTEMA OPERATIVO ---
+
+Ficheiros temporários do Mac e Windows
+
+.DS_Store
+Thumbs.db
+
+--- LOGS ---
+
+Registos de erros e histórico de execução
+
+*.log
