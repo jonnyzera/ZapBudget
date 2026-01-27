@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client
 import os
@@ -19,6 +21,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Caminho para a pasta de templates/estáticos
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+# O manifest e o service worker costumam estar na raiz do projeto (zapbudget/)
+ROOT_DIR = os.path.dirname(BASE_DIR)
+
+# Monta a pasta de arquivos estáticos (para imagens, css, js)
+if os.path.exists(TEMPLATES_DIR):
+    app.mount("/templates", StaticFiles(directory=TEMPLATES_DIR), name="templates")
+
 # Credenciais Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -28,7 +40,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Modelo de Dados - Corrigido 'validate' para 'validade' para evitar conflito com Pydantic
+# Modelo de Dados
 class Orcamento(BaseModel):
     user_id: str
     vendor_name: str
@@ -39,14 +51,56 @@ class Orcamento(BaseModel):
     pagamento: str = None
     validade: str = None 
 
+# --- ROTAS DE NAVEGAÇÃO E PWA (Prioridade Máxima) ---
+
+@app.get("/")
+async def serve_home():
+    """Serve o site.html como página principal para priorizar o PWA"""
+    site_path = os.path.join(TEMPLATES_DIR, "site.html")
+    if os.path.exists(site_path):
+        return FileResponse(site_path)
+    
+    # Fallback para index caso site.html não exista
+    index_path = os.path.join(TEMPLATES_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "ZapBudget API ativa. Frontend não encontrado."}
+
+@app.get("/manifest.json")
+async def serve_manifest():
+    """Serve o ficheiro manifest.json necessário para o PWA ser instalável"""
+    manifest_path = os.path.join(ROOT_DIR, "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path)
+    return HTTPException(status_code=404)
+
+@app.get("/service-worker.js")
+async def serve_sw():
+    """Serve o ficheiro service-worker.js necessário para o PWA"""
+    sw_path = os.path.join(ROOT_DIR, "service-worker.js")
+    if os.path.exists(sw_path):
+        return FileResponse(sw_path)
+    return HTTPException(status_code=404)
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve o favicon para evitar erro 404 no log"""
+    favicon_path = os.path.join(TEMPLATES_DIR, "img", "favicon (3).png")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return HTTPException(status_code=404)
+
+# --- ROTAS DA API ---
+
 @app.post("/orcamentos")
 async def salvar_orcamento(dados: Orcamento):
     try:
-        # 1. Verificar/Criar o perfil do utilizador (Uso do execute() para evitar exceções se não existir)
+        # 1. Verificar/Criar o perfil do utilizador
         res_profile = supabase.table("profiles").select("*").eq("id", dados.user_id).execute()
         
         if not res_profile.data:
-            # Novo usuário: Inicia Trial de 7 dias
+            # Novo utilizador: Criação de trial automático de 7 dias
             new_profile = {
                 "id": dados.user_id,
                 "trial_start": datetime.now(timezone.utc).isoformat(),
@@ -57,9 +111,8 @@ async def salvar_orcamento(dados: Orcamento):
         else:
             profile = res_profile.data[0]
 
-        # 2. Validar período de Trial ou Assinatura Premium
+        # 2. Validar período de 7 dias ou Assinatura Premium
         if not profile.get("is_premium", False):
-            # Normalização da data (ISO para objeto datetime)
             start_str = profile["trial_start"].replace("Z", "+00:00")
             trial_start = datetime.fromisoformat(start_str)
             agora = datetime.now(timezone.utc)
@@ -71,7 +124,6 @@ async def salvar_orcamento(dados: Orcamento):
                 )
 
         # 3. Guardar o orçamento no banco de dados
-        # .model_dump() é o padrão do Pydantic v2 (substituto do .dict())
         payload = dados.model_dump(exclude_none=True)
         res_budget = supabase.table("orçamentos").insert(payload).execute()
         
@@ -89,7 +141,6 @@ async def salvar_orcamento(dados: Orcamento):
 @app.get("/orcamentos/{id}")
 async def buscar_orcamento(id: str):
     try:
-        # Busca orçamento único
         res = supabase.table("orçamentos").select("*").eq("id", id).execute()
         if not res.data:
             raise HTTPException(status_code=404, detail="Orçamento não encontrado")
