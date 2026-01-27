@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ZapBudget - Orçamentos Profissionais</title>
+    <!-- Favicon e PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#16a34a">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -13,12 +19,12 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             scroll-behavior: smooth;
             -webkit-tap-highlight-color: transparent;
+            padding-bottom: 80px; /* Espaço para a nav inferior no mobile */
         }
 
         .receipt-preview {
             background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
             background-size: 20px 20px;
-            overflow-x: hidden;
         }
 
         .paper {
@@ -26,7 +32,7 @@
             position: relative;
             box-shadow: 0 20px 50px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 100%;
+            border-radius: 4px;
         }
 
         .paper::before {
@@ -37,7 +43,7 @@
             background: linear-gradient(90deg, #22c55e, #16a34a);
         }
 
-        input:focus, textarea:focus, select:focus {
+        input:focus, textarea:focus {
             outline: none;
             border-color: #22c55e;
             box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
@@ -50,14 +56,14 @@
             .paper { box-shadow: none !important; border: 1px solid #eee; margin: 0; width: 100%; min-height: auto; }
         }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Animação do Modal */
+        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900 min-h-screen">
 
+    <!-- NAV SUPERIOR -->
     <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -66,8 +72,8 @@
                 </div>
                 <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
             </div>
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
-                Gerador de Orçamentos Profissionais
+            <div id="user-nav" class="flex items-center gap-4">
+                <button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>
             </div>
         </div>
     </nav>
@@ -75,6 +81,7 @@
     <main class="max-w-7xl mx-auto px-4 py-8 lg:py-12">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
+            <!-- FORMULÁRIO -->
             <div class="lg:col-span-5 space-y-8 no-print">
                 <div class="space-y-2">
                     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Criar Orçamento</h1>
@@ -82,6 +89,7 @@
                 </div>
 
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6">
+                    <!-- Identificação -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="user" class="w-4 h-4"></i> Identificação
@@ -98,6 +106,7 @@
                         </div>
                     </div>
 
+                    <!-- Detalhes do Serviço -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="briefcase" class="w-4 h-4"></i> Detalhes do Serviço
@@ -118,6 +127,7 @@
                         </div>
                     </div>
 
+                    <!-- Valor e Validade -->
                     <div class="space-y-4 pt-2">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
                             <i data-lucide="dollar-sign" class="w-4 h-4"></i> Valor e Validade
@@ -136,13 +146,13 @@
                 </div>
 
                 <div class="flex flex-col gap-3">
-                    <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-5 rounded-2xl transition-all shadow-lg shadow-slate-200/50 flex items-center justify-center gap-3 text-lg active:scale-[0.98]">
+                    <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-5 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 text-lg active:scale-[0.98]">
                         <i data-lucide="printer" class="w-6 h-6 text-green-400"></i>
                         Gerar PDF / Imprimir
                     </button>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button id="btnZap" onclick="shareWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-green-100 active:scale-[0.98]">
+                        <button id="btnZap" onclick="handleMainAction()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md active:scale-[0.98]">
                             <i data-lucide="message-circle" class="w-5 h-5"></i> Enviar WhatsApp
                         </button>
                         
@@ -153,6 +163,7 @@
                 </div>
             </div>
 
+            <!-- PREVIEW -->
             <div class="lg:col-span-7">
                 <div class="sticky top-24">
                     <div class="mb-4 flex items-center justify-between no-print px-2 sm:px-0">
@@ -167,14 +178,14 @@
                             <div>
                                 <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-12">
                                     <div class="space-y-2">
-                                        <h2 id="previewVendor" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tighter uppercase break-words max-w-[250px] sm:max-w-none">SUA EMPRESA</h2>
+                                        <h2 id="previewVendor" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tighter uppercase break-words">SUA EMPRESA</h2>
                                         <div class="inline-block bg-slate-900 text-white text-[10px] font-black px-2 py-1 uppercase tracking-tighter">
                                             Proposta Comercial
                                         </div>
                                     </div>
                                     <div class="text-left sm:text-right">
                                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Emissão</p>
-                                        <p id="currentDate" class="text-sm font-bold text-slate-800">22/01/2026</p>
+                                        <p id="currentDate" class="text-sm font-bold text-slate-800">26/01/2026</p>
                                     </div>
                                 </div>
 
@@ -207,7 +218,7 @@
                             <div class="mt-12 space-y-12">
                                 <div class="pt-8 border-t-4 border-slate-900 flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4">
                                     <div class="order-2 sm:order-1 text-left w-full sm:w-auto">
-                                        <p id="previewExpiry" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"></p>
+                                        <p id="previewExpiry" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic"></p>
                                     </div>
                                     <div class="text-right order-1 sm:order-2 w-full sm:w-auto">
                                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Investimento Total</p>
@@ -217,9 +228,9 @@
 
                                 <div class="pt-8 border-t border-slate-100 flex flex-col items-center text-center">
                                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Atenciosamente,</p>
-                                    <p id="previewVendorSignature" class="text-sm sm:text-base font-extrabold text-slate-900 uppercase italic"></p>
+                                    <p class="text-sm sm:text-base font-extrabold text-slate-900 uppercase italic">ZapBudget</p>
                                     <div class="w-12 h-1 bg-green-500 mt-2 mb-4 rounded-full"></div>
-                                    <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.3em]">ZapBudget</p>
+                                    <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.3em]">Software Profissional</p>
                                 </div>
                             </div>
                         </div>
@@ -229,32 +240,101 @@
         </div>
     </main>
 
+    <!-- BOTTOM NAVIGATION (PWA Mobile) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden no-print">
+        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-green-600">
+            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Novo</span>
+        </button>
+        <button onclick="showAuthModal()" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="history" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Histórico</span>
+        </button>
+        <button onclick="showAuthModal()" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="crown" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Pro</span>
+        </button>
+    </div>
+
+    <!-- MODAL DE AUTENTICAÇÃO -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter">
+            <div class="text-center space-y-2">
+                <div class="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center text-green-600 mx-auto mb-4">
+                    <i data-lucide="unlock" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900">Começar 7 Dias Grátis</h3>
+                <p class="text-slate-500 font-medium text-sm">Crie sua conta em segundos para enviar este orçamento e profissionalizar seu negócio.</p>
+            </div>
+            <div class="space-y-4">
+                <input type="email" id="authEmail" placeholder="Seu e-mail" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 font-medium">
+                <input type="password" id="authPass" placeholder="Crie uma senha" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 font-medium">
+                <button onclick="processAuth()" id="btnProcessAuth" class="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-95">
+                    ATIVAR TESTE GRATUITO
+                </button>
+            </div>
+            <button onclick="closeAuthModal()" class="w-full text-slate-400 font-bold text-sm">Talvez mais tarde</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE UPGRADE -->
+    <div id="upgradeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter border-t-8 border-green-500 text-center">
+            <h3 class="text-2xl font-black text-slate-900">Seu Trial Expirou ⏳</h3>
+            <p class="text-slate-500 font-medium">Assine o Pro para continuar enviando orçamentos ilimitados.</p>
+            <button onclick="goToStripe()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-lg shadow-xl active:scale-95">
+                ASSINAR POR R$ 19,90/mês
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL RESET -->
     <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
             <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
                 <i data-lucide="alert-triangle" class="w-8 h-8"></i>
             </div>
-            <div class="text-center space-y-2">
-                <h3 class="text-xl font-bold text-slate-900">Limpar dados?</h3>
-                <p class="text-slate-500 text-sm">Isso apagará todas as informações digitadas.</p>
-            </div>
+            <h3 class="text-xl font-bold text-slate-900">Limpar dados?</h3>
             <div class="flex gap-3">
-                <button onclick="hideModalReset()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-all">Cancelar</button>
-                <button onclick="resetAll()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all">Limpar</button>
+                <button onclick="hideModalReset()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                <button onclick="resetAll()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl">Limpar</button>
             </div>
         </div>
     </div>
 
     <script>
-        lucide.createIcons();
+        // CONFIGURAÇÕES SUPABASE
+        const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_hR1cOLUTK0is6yOiNfWnKQ_5xz7bDXI";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const API_URL = "http://127.0.0.1:8000";
-        const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
-        
-        const hoje = new Date().toLocaleDateString('pt-BR');
-        document.getElementById('currentDate').innerText = hoje;
+        let currentUser = null;
 
-        // Máscara de Moeda
+        lucide.createIcons();
+
+        // 1. MONITORAR AUTENTICAÇÃO
+        supabase.auth.onAuthStateChange((event, session) => {
+            currentUser = session?.user || null;
+            updateUserNav();
+        });
+
+        function updateUserNav() {
+            const nav = document.getElementById('user-nav');
+            if (currentUser) {
+                nav.innerHTML = `
+                    <span class="text-xs font-bold text-slate-400 hidden sm:block">${currentUser.email}</span>
+                    <button onclick="handleLogout()" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold">Sair</button>
+                `;
+            } else {
+                nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
+            }
+        }
+
+        // 2. MÁSCARA E PREVIEW
+        const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
+
         document.getElementById('totalValue').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, "");
             value = (value / 100).toFixed(2) + "";
@@ -265,22 +345,17 @@
         });
 
         function updatePreview() {
-            const data = {};
-            inputs.forEach(id => {
-                data[id] = document.getElementById(id).value;
-            });
-
-            document.getElementById('previewVendor').innerText = data.vendorName || 'SUA EMPRESA';
-            document.getElementById('previewVendorSignature').innerText = data.vendorName || 'SUA EMPRESA';
-            document.getElementById('previewClient').innerText = data.clientName || 'Nome do Cliente';
-            document.getElementById('previewService').innerText = data.serviceDescription || 'Os detalhes aparecerão aqui...';
-            document.getElementById('previewPrice').innerText = data.totalValue || 'R$ 0,00';
-            document.getElementById('previewDelivery').innerText = data.deliveryTime || '-';
-            document.getElementById('previewPayment').innerText = data.paymentMethod || '-';
-
-            if (data.expiryDate) {
-                const [ano, mes, dia] = data.expiryDate.split('-');
-                document.getElementById('previewExpiry').innerText = `VÁLIDO ATÉ ${dia}/${mes}/${ano}`;
+            document.getElementById('previewVendor').innerText = document.getElementById('vendorName').value || 'SUA EMPRESA';
+            document.getElementById('previewClient').innerText = document.getElementById('clientName').value || 'Nome do Cliente';
+            document.getElementById('previewService').innerText = document.getElementById('serviceDescription').value || 'Os detalhes aparecerão aqui...';
+            document.getElementById('previewPrice').innerText = document.getElementById('totalValue').value || 'R$ 0,00';
+            document.getElementById('previewDelivery').innerText = document.getElementById('deliveryTime').value || '-';
+            document.getElementById('previewPayment').innerText = document.getElementById('paymentMethod').value || '-';
+            
+            const exp = document.getElementById('expiryDate').value;
+            if(exp) {
+                const [y, m, d] = exp.split('-');
+                document.getElementById('previewExpiry').innerText = `VÁLIDO ATÉ: ${d}/${m}/${y}`;
             } else {
                 document.getElementById('previewExpiry').innerText = '';
             }
@@ -292,11 +367,18 @@
             }
         });
 
+        // 3. AÇÕES
+        async function handleMainAction() {
+            if (!currentUser) { showAuthModal(); return; }
+            await shareWhatsApp();
+        }
+
         async function shareWhatsApp() {
             const btn = document.getElementById('btnZap');
-            const originalContent = btn.innerHTML;
+            const original = btn.innerHTML;
             
             const payload = {
+                user_id: currentUser.id,
                 vendor_name: document.getElementById('vendorName').value || 'Profissional',
                 client_name: document.getElementById('clientName').value,
                 servicos: document.getElementById('serviceDescription').value,
@@ -306,66 +388,57 @@
                 validade: document.getElementById('expiryDate').value
             };
 
-            if (!payload.client_name || !payload.valor) {
-                alert("Por favor, preencha o Nome do Cliente e o Valor Total.");
-                return;
-            }
+            if (!payload.client_name || !payload.valor) return alert("Preencha os campos!");
 
             try {
                 btn.disabled = true;
-                btn.innerText = "Gerando Link...";
+                btn.innerText = "Processando...";
 
-                const response = await fetch(`${API_URL}/orcamentos`, {
+                const res = await fetch(`${API_URL}/orcamentos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 
-                if (!response.ok) throw new Error("Erro ao salvar orçamento");
+                if (res.status === 402) { showUpgradeModal(); return; }
+                if (!res.ok) throw new Error();
                 
-                const result = await response.json();
-                const linkVisualizacao = `https://zapbudget.site/view.html?id=${result.id}`;
-
-                const mensagem = 
-`📄 *ORÇAMENTO PROFISSIONAL*
----------------------------------
-🏢 *De:* ${payload.vendor_name}
-👤 *Cliente:* ${payload.client_name}
-💰 *Investimento:* ${payload.valor}
-
-🔗 *Ver Orçamento Completo:*
-${linkVisualizacao}
-
----------------------------------
-✅ *Aguardo seu retorno para iniciarmos!*`;
-
-                window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
-
-            } catch (error) {
-                console.error(error);
-                alert("Erro ao conectar com o servidor. Verifique se o Back-end está rodando.");
+                const data = await res.json();
+                const link = `https://zapbudget.site/view.html?id=${data.id}`;
+                const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            } catch {
+                alert("Erro ao conectar.");
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = originalContent;
+                btn.innerHTML = original;
                 lucide.createIcons();
             }
         }
 
-        function showModalReset() {
-            document.getElementById('modalReset').classList.remove('hidden');
-            document.getElementById('modalReset').classList.add('flex');
+        // AUTH LOGIC
+        async function processAuth() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPass').value;
+            if (!email || !password) return alert("Preencha!");
+            
+            let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                const reg = await supabase.auth.signUp({ email, password });
+                if (reg.error) alert(reg.error.message);
+                else alert("Verifique seu e-mail!");
+            }
+            closeAuthModal();
         }
 
-        function hideModalReset() {
-            document.getElementById('modalReset').classList.add('hidden');
-            document.getElementById('modalReset').classList.remove('flex');
-        }
-
-        function resetAll() {
-            inputs.forEach(id => document.getElementById(id).value = '');
-            updatePreview();
-            hideModalReset();
-        }
+        function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); }
+        function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
+        function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
+        function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
+        async function handleLogout() { await supabase.auth.signOut(); location.reload(); }
+        function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
+        function goToStripe() { window.location.href = "SEU_LINK_DO_STRIPE"; }
     </script>
 </body>
 </html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Conta - ZapBudget Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            padding-bottom: 90px;
+        }
+
+        .pro-card {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            box-shadow: 0 20px 40px rgba(22, 163, 74, 0.2);
+        }
+
+        .premium-glow {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-glow::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
+        }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <!-- NAV SUPERIOR -->
+    <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-green-600 p-1.5 rounded-lg text-white">
+                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
+            </div>
+            <button onclick="handleLogout()" class="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors">
+                Sair
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-xl mx-auto px-4 py-8">
+        
+        <!-- CABEÇALHO PERFIL -->
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-white border-2 border-slate-100 rounded-[32px] flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
+            </div>
+            <h1 id="user-email" class="text-xl font-black text-slate-900 tracking-tight">---</h1>
+            <p id="account-badge" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Carregando plano...</p>
+        </div>
+
+        <!-- CARD DE STATUS ATUAL -->
+        <div id="status-container" class="mb-8">
+            <div class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center">
+                <div id="trial-view" class="hidden space-y-4">
+                    <div class="bg-yellow-50 text-yellow-700 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase">Período de Experiência</div>
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tighter" id="days-left">0 dias</h2>
+                    <p class="text-slate-500 text-sm font-medium">Restantes para o fim do seu teste gratuito.</p>
+                </div>
+                
+                <div id="pro-view" class="hidden space-y-4">
+                    <div class="bg-green-100 text-green-700 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Assinatura Ativa</div>
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tighter italic">PRO</h2>
+                    <p class="text-slate-500 text-sm font-medium">Você tem acesso ilimitado a todas as ferramentas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABELA DE PREÇOS / UPGRADE -->
+        <div id="pricing-section" class="hidden">
+            <div class="pro-card rounded-[40px] p-8 text-white premium-glow">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <h3 class="text-2xl font-black italic tracking-tight">ZapBudget PRO</h3>
+                        <p class="text-green-100 text-sm opacity-80">Profissionalize suas vendas.</p>
+                    </div>
+                    <div class="bg-white/20 p-3 rounded-2xl">
+                        <i data-lucide="crown" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-10">
+                    <div class="flex items-center gap-3 font-bold text-sm">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Orçamentos Ilimitados
+                    </div>
+                    <div class="flex items-center gap-3 font-bold text-sm">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Sua Logo nos Documentos
+                    </div>
+                    <div class="flex items-center gap-3 font-bold text-sm">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Gestão de Histórico
+                    </div>
+                    <div class="flex items-center gap-3 font-bold text-sm">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Envio Direto via Zap
+                    </div>
+                </div>
+
+                <div class="flex items-baseline gap-1 mb-8">
+                    <span class="text-sm font-bold opacity-60">R$</span>
+                    <span class="text-5xl font-black tracking-tighter">19,90</span>
+                    <span class="text-sm font-bold opacity-60">/mês</span>
+                </div>
+
+                <button onclick="goToStripe()" class="w-full bg-white text-green-700 font-black py-5 rounded-2xl text-lg shadow-xl active:scale-95 transition-all">
+                    ASSINAR AGORA
+                </button>
+                <p class="text-[9px] text-center mt-4 opacity-40 font-black uppercase tracking-widest">Cancele quando quiser · Sem fidelidade</p>
+            </div>
+        </div>
+
+        <!-- INFO EXTRA -->
+        <div class="mt-12 text-center space-y-4">
+            <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Segurança ZapBudget</p>
+            <div class="flex justify-center gap-6 opacity-20">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                <i data-lucide="lock" class="w-5 h-5"></i>
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] no-print">
+        <a href="site.html" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Novo</span>
+        </a>
+        <a href="historico.html" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="history" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Histórico</span>
+        </a>
+        <a href="pro.html" class="flex flex-col items-center gap-1 text-green-600">
+            <i data-lucide="crown" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Pro</span>
+        </a>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_hR1cOLUTK0is6yOiNfWnKQ_5xz7bDXI";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let currentUser = null;
+
+        lucide.createIcons();
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = "site.html";
+                return;
+            }
+            currentUser = session.user;
+            document.getElementById('user-email').innerText = currentUser.email;
+            
+            loadStatus();
+        }
+
+        async function loadStatus() {
+            const { data: profile } = await supabase
+                .table('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            const trialView = document.getElementById('trial-view');
+            const proView = document.getElementById('pro-view');
+            const pricing = document.getElementById('pricing-section');
+            const badge = document.getElementById('account-badge');
+
+            if (profile) {
+                if (profile.is_premium) {
+                    proView.classList.remove('hidden');
+                    badge.innerText = "Assinante Pro";
+                    badge.classList.replace('text-slate-400', 'text-green-600');
+                } else {
+                    trialView.classList.remove('hidden');
+                    pricing.classList.remove('hidden');
+                    badge.innerText = "Plano Trial";
+                    
+                    // Calcular dias
+                    const trialStart = new Date(profile.trial_start);
+                    const hoje = new Date();
+                    const diffDays = Math.ceil((hoje - trialStart) / (1000 * 60 * 60 * 24));
+                    const restantes = Math.max(0, 7 - diffDays);
+                    document.getElementById('days-left').innerText = `${restantes} dias`;
+                }
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            window.location.href = "site.html";
+        }
+
+        function goToStripe() {
+            // URL do seu Checkout do Stripe
+            window.location.href = "https://buy.stripe.com/exemplo_pro_zapbudget";
+        }
+
+        init();
+    </script>
+</body>
+</html>
