@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client
 import os
+import stripe
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from app.routes import budgets
@@ -14,7 +15,11 @@ load_dotenv()
 
 app = FastAPI()
 
-# Configuração de CORS para permitir acesso do PWA (Frontend)
+# Configuração de Stripe
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+# Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,16 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registro essencial para o funcionamento do endpoint de PDF
+# Registro do endpoint de PDF
 app.include_router(budgets.router, prefix="/api/v1/pdf", tags=["PDF"])
 
-# Caminho para a pasta de templates/estáticos
+# Caminhos de diretórios
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
-# O manifest e o service worker costumam estar na raiz do projeto (zapbudget/)
 ROOT_DIR = os.path.dirname(BASE_DIR)
 
-# Monta a pasta de arquivos estáticos (para imagens, css, js)
 if os.path.exists(TEMPLATES_DIR):
     app.mount("/templates", StaticFiles(directory=TEMPLATES_DIR), name="templates")
 
@@ -40,11 +43,10 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("Erro: Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não encontradas.")
+    raise RuntimeError("Erro: Variáveis SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não encontradas.")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Modelo de Dados
 class Orcamento(BaseModel):
     user_id: str
     vendor_name: str
@@ -55,56 +57,69 @@ class Orcamento(BaseModel):
     pagamento: str = None
     validade: str = None 
 
-# --- ROTAS DE NAVEGAÇÃO E PWA (Prioridade Máxima) ---
+# --- ROTAS DE PAGAMENTO (STRIPE WEBHOOK) ---
+
+@app.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """
+    Escuta eventos do Stripe para ativar/desativar Premium automaticamente
+    """
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro no Webhook: {str(e)}")
+
+    # Pagamento de assinatura concluído com sucesso
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        user_id = session.get('client_reference_id')
+        
+        if user_id:
+            supabase.table("profiles").update({
+                "is_premium": True,
+                "stripe_customer_id": session.get('customer')
+            }).eq("id", user_id).execute()
+
+    # Assinatura cancelada ou expirada
+    elif event['type'] in ['customer.subscription.deleted', 'customer.subscription.updated']:
+        subscription = event['data']['object']
+        if subscription.get('status') != 'active':
+            # Busca o usuário pelo ID do cliente Stripe e remove o premium
+            res = supabase.table("profiles").select("id").eq("stripe_customer_id", subscription['customer']).execute()
+            if res.data:
+                supabase.table("profiles").update({"is_premium": False}).eq("id", res.data[0]['id']).execute()
+
+    return {"status": "success"}
+
+# --- ROTAS PWA E NAVEGAÇÃO ---
 
 @app.get("/")
 async def serve_home():
-    """Serve o site.html como página principal para priorizar o PWA"""
     site_path = os.path.join(TEMPLATES_DIR, "site.html")
-    if os.path.exists(site_path):
-        return FileResponse(site_path)
-    
-    # Fallback para index caso site.html não exista
-    index_path = os.path.join(TEMPLATES_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    
-    return {"message": "ZapBudget API ativa. Frontend não encontrado."}
+    return FileResponse(site_path) if os.path.exists(site_path) else {"message": "API Ativa"}
 
 @app.get("/manifest.json")
 async def serve_manifest():
-    """Serve o ficheiro manifest.json necessário para o PWA ser instalável"""
-    manifest_path = os.path.join(ROOT_DIR, "manifest.json")
-    if os.path.exists(manifest_path):
-        return FileResponse(manifest_path)
-    return HTTPException(status_code=404)
+    return FileResponse(os.path.join(ROOT_DIR, "manifest.json"))
 
 @app.get("/service-worker.js")
 async def serve_sw():
-    """Serve o ficheiro service-worker.js necessário para o PWA"""
-    sw_path = os.path.join(ROOT_DIR, "service-worker.js")
-    if os.path.exists(sw_path):
-        return FileResponse(sw_path)
-    return HTTPException(status_code=404)
-
-@app.get("/favicon.ico")
-async def favicon():
-    """Serve o favicon para evitar erro 404 no log"""
-    favicon_path = os.path.join(TEMPLATES_DIR, "img", "favicon (3).png")
-    if os.path.exists(favicon_path):
-        return FileResponse(favicon_path)
-    return HTTPException(status_code=404)
+    return FileResponse(os.path.join(ROOT_DIR, "service-worker.js"))
 
 # --- ROTAS DA API ---
 
 @app.post("/orcamentos")
 async def salvar_orcamento(dados: Orcamento):
     try:
-        # 1. Verificar/Criar o perfil do utilizador
         res_profile = supabase.table("profiles").select("*").eq("id", dados.user_id).execute()
         
         if not res_profile.data:
-            # Novo utilizador: Criação de trial automático de 7 dias
+            # Novo utilizador: Trial automático de 7 dias
             new_profile = {
                 "id": dados.user_id,
                 "trial_start": datetime.now(timezone.utc).isoformat(),
@@ -115,41 +130,23 @@ async def salvar_orcamento(dados: Orcamento):
         else:
             profile = res_profile.data[0]
 
-        # 2. Validar período de 7 dias ou Assinatura Premium
+        # Validação de acesso (Trial ou Premium)
         if not profile.get("is_premium", False):
             start_str = profile["trial_start"].replace("Z", "+00:00")
             trial_start = datetime.fromisoformat(start_str)
-            agora = datetime.now(timezone.utc)
+            if datetime.now(timezone.utc) > (trial_start + timedelta(days=7)):
+                raise HTTPException(status_code=402, detail="Trial expirado. Assine o Pro!")
 
-            if agora > (trial_start + timedelta(days=7)):
-                raise HTTPException(
-                    status_code=402, 
-                    detail="O seu período de 7 dias grátis terminou. Assine o Pro para continuar!"
-                )
-
-        # 3. Guardar o orçamento no banco de dados
         payload = dados.model_dump(exclude_none=True)
         res_budget = supabase.table("orçamentos").insert(payload).execute()
         
-        if not res_budget.data:
-             raise HTTPException(status_code=500, detail="Erro ao guardar no banco de dados")
-             
         return {"id": res_budget.data[0]['id']}
-
-    except HTTPException as he:
-        raise he
     except Exception as e:
-        print(f"Erro no Servidor: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro interno no servidor")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/orcamentos/{id}")
 async def buscar_orcamento(id: str):
-    try:
-        res = supabase.table("orçamentos").select("*").eq("id", id).execute()
-        if not res.data:
-            raise HTTPException(status_code=404, detail="Orçamento não encontrado")
-        return res.data[0]
-    except HTTPException as he:
-        raise he
-    except Exception:
-        raise HTTPException(status_code=404, detail="Erro ao buscar orçamento")
+    res = supabase.table("orçamentos").select("*").eq("id", id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Orçamento não encontrado")
+    return res.data[0]
