@@ -7,6 +7,7 @@ from supabase import create_client
 import os
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
+from app.routes import budgets
 
 # Carrega as variáveis do ficheiro .env
 load_dotenv()
@@ -20,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Registro essencial para o funcionamento do endpoint de PDF
+app.include_router(budgets.router, prefix="/api/v1/pdf", tags=["PDF"])
 
 # Caminho para a pasta de templates/estáticos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -58,9 +58,61 @@
 
         .modal-enter { animation: modalFadeIn 0.3s ease-out; }
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .google-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+        .google-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        /* Toast Styles */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            width: 90%;
+            max-width: 400px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            animation: toastIn 0.3s ease-out forwards;
+            pointer-events: auto;
+            border-left: 4px solid #16a34a;
+        }
+
+        .toast.error { border-left-color: #ef4444; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900 min-h-screen">
+
+    <!-- Container de Toasts -->
+    <div id="toast-container"></div>
 
     <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -249,23 +301,56 @@
     </div>
 
     <!-- MODAIS -->
-    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter">
-            <div class="text-center space-y-2">
-                <div class="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center text-green-600 mx-auto mb-4">
-                    <i data-lucide="unlock" class="w-8 h-8"></i>
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[40px] p-8 max-w-md w-full shadow-2xl space-y-8 modal-enter my-8">
+            <!-- Logo -->
+            <div class="text-center">
+                <div class="bg-green-600 w-16 h-16 rounded-2xl text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-100">
+                    <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
                 </div>
-                <h3 class="text-2xl font-black text-slate-900">Começar 7 Dias Grátis</h3>
-                <p class="text-slate-500 font-medium text-sm">Crie sua conta em segundos para enviar este orçamento e profissionalizar seu negócio.</p>
+                <h2 id="auth-title" class="text-3xl font-black text-slate-900 tracking-tight uppercase">Começar 7 Dias Grátis</h2>
+                <p id="auth-subtitle" class="text-slate-500 mt-3 font-medium px-4">Crie sua conta em segundos para enviar este orçamento e profissionalizar seu negócio.</p>
             </div>
-            <div class="space-y-4">
-                <input type="email" id="authEmail" placeholder="Seu e-mail" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 font-medium">
-                <input type="password" id="authPass" placeholder="Crie uma senha" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 font-medium">
-                <button onclick="processAuth()" id="btnProcessAuth" class="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-95">
+
+            <!-- Login com Google -->
+            <button onclick="handleGoogleLogin()" id="google-btn" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-6 active:scale-95 transition-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continuar com Google
+            </button>
+
+            <div class="relative flex items-center gap-4 mb-6">
+                <div class="flex-1 h-px bg-slate-100"></div>
+                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">ou e-mail</span>
+                <div class="flex-1 h-px bg-slate-100"></div>
+            </div>
+
+            <form onsubmit="handleAuth(event)" class="space-y-5">
+                <!-- E-mail -->
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Seu E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="exemplo@gmail.com" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                </div>
+
+                <!-- Palavra-passe -->
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Sua Senha</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                </div>
+
+                <!-- Botão Principal -->
+                <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-2 mt-2">
                     ATIVAR TESTE GRATUITO
                 </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <button onclick="closeAuthModal()" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">Talvez mais tarde</button>
             </div>
-            <button onclick="closeAuthModal()" class="w-full text-slate-400 font-bold text-sm">Talvez mais tarde</button>
         </div>
     </div>
 
@@ -302,6 +387,29 @@
         let currentUser = null;
 
         lucide.createIcons();
+
+        // Sistema de Notificações Mobile (Toast)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            
+            const icon = type === 'error' ? 'alert-circle' : 'check-circle';
+            const color = type === 'error' ? 'text-red-500' : 'text-green-500';
+            
+            toast.innerHTML = `
+                <i data-lucide="${icon}" class="w-5 h-5 ${color}"></i>
+                <span class="text-sm font-bold text-slate-700">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
 
         supabaseClient.auth.onAuthStateChange((event, session) => {
             currentUser = session?.user || null;
@@ -356,7 +464,11 @@
         });
 
         async function handleMainAction() {
-            if (!currentUser) { showAuthModal(); return; }
+            if (!currentUser) { 
+                showToast("Por favor, entre para enviar o orçamento.", "error");
+                showAuthModal(); 
+                return; 
+            }
             await shareWhatsApp();
         }
 
@@ -375,7 +487,10 @@
                 validade: document.getElementById('expiryDate').value
             };
 
-            if (!payload.client_name || !payload.valor) return alert("Preencha os campos!");
+            if (!payload.client_name || !payload.valor) {
+                showToast("Preencha o nome do cliente e o valor!", "error");
+                return;
+            }
 
             try {
                 btn.disabled = true;
@@ -387,15 +502,20 @@
                     body: JSON.stringify(payload)
                 });
                 
-                if (res.status === 402) { showUpgradeModal(); return; }
+                if (res.status === 402) { 
+                    showUpgradeModal(); 
+                    return; 
+                }
+                
                 if (!res.ok) throw new Error();
                 
                 const data = await res.json();
                 const link = `https://zapbudget.site/view.html?id=${data.id}`;
                 const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                showToast("Orçamento gerado com sucesso!");
             } catch {
-                alert("Erro ao conectar.");
+                showToast("Erro ao conectar com o servidor.", "error");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = original;
@@ -403,28 +523,99 @@
             }
         }
 
-        async function processAuth() {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPass').value;
-            if (!email || !password) return alert("Preencha!");
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const btn = document.getElementById('auth-btn');
             
-            let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                const reg = await supabaseClient.auth.signUp({ email, password });
-                if (reg.error) alert(reg.error.message);
-                else alert("Verifique seu e-mail!");
+            if (!email || password.length < 6) {
+                showToast("A senha deve ter pelo menos 6 caracteres.", "error");
+                return;
             }
+
+            btn.disabled = true;
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> ATIVANDO...`;
+            lucide.createIcons();
+
+            // Tenta fazer login primeiro
+            let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                // Se o login falhar por credenciais inválidas, tentamos o registro (Signup)
+                if (error.message.includes("Invalid login credentials")) {
+                    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({ 
+                        email, 
+                        password 
+                    });
+
+                    if (signUpError) {
+                        showToast(signUpError.message, "error");
+                        btn.disabled = false;
+                        btn.innerHTML = originalBtnText;
+                        lucide.createIcons();
+                        return;
+                    }
+                    showToast("Conta criada! Verifique seu e-mail.");
+                } else {
+                    showToast(error.message, "error");
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnText;
+                    lucide.createIcons();
+                    return;
+                }
+            } else {
+                showToast("Bem-vindo de volta!");
+            }
+
             closeAuthModal();
         }
 
-        function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
-        function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); }
+        async function handleGoogleLogin() {
+            const btn = document.getElementById('google-btn');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = "A redirecionar...";
+            
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+
+            if (error) {
+                showToast("Erro Google: " + error.message, "error");
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        }
+
+        function showAuthModal() { 
+            document.getElementById('authModal').classList.replace('hidden', 'flex'); 
+        }
+        function closeAuthModal() { 
+            document.getElementById('authModal').classList.replace('flex', 'hidden'); 
+        }
         function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
         function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
         function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
-        async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
-        function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
-        function goToStripe() { window.location.href = "SEU_LINK_DO_STRIPE"; }
+        async function handleLogout() { 
+            await supabaseClient.auth.signOut(); 
+            showToast("Sessão encerrada.");
+            location.reload(); 
+        }
+        function resetAll() { 
+            inputs.forEach(id => document.getElementById(id).value = ''); 
+            updatePreview(); 
+            hideModalReset(); 
+            showToast("Dados limpos.");
+        }
+        
+        function goToStripe() { 
+            window.location.href = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01"; 
+        }
     </script>
 </body>
 </html>

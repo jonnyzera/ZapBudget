@@ -138,7 +138,7 @@
 
     <!-- BOTTOM NAVIGATION -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] no-print">
-        <a href="site.html" class="flex flex-col items-center gap-1 text-slate-400">
+        <a href="/" class="flex flex-col items-center gap-1 text-slate-400">
             <i data-lucide="plus-circle" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Novo</span>
         </a>
@@ -154,17 +154,17 @@
 
     <script>
         const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_hR1cOLUTK0is6yOiNfWnKQ_5xz7bDXI";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let currentUser = null;
 
         lucide.createIcons();
 
         async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
-                window.location.href = "site.html";
+                window.location.href = "/";
                 return;
             }
             currentUser = session.user;
@@ -174,7 +174,7 @@
         }
 
         async function loadStatus() {
-            const { data: profile } = await supabase
+            const { data: profile } = await supabaseClient
                 .table('profiles')
                 .select('*')
                 .eq('id', currentUser.id)
@@ -190,15 +190,15 @@
                     proView.classList.remove('hidden');
                     badge.innerText = "Assinante Pro";
                     badge.classList.replace('text-slate-400', 'text-green-600');
+                    pricing.classList.add('hidden');
                 } else {
                     trialView.classList.remove('hidden');
                     pricing.classList.remove('hidden');
                     badge.innerText = "Plano Trial";
                     
-                    // Calcular dias
                     const trialStart = new Date(profile.trial_start);
                     const hoje = new Date();
-                    const diffDays = Math.ceil((hoje - trialStart) / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.floor((hoje - trialStart) / (1000 * 60 * 60 * 24));
                     const restantes = Math.max(0, 7 - diffDays);
                     document.getElementById('days-left').innerText = `${restantes} dias`;
                 }
@@ -206,13 +206,12 @@
         }
 
         async function handleLogout() {
-            await supabase.auth.signOut();
-            window.location.href = "site.html";
+            await supabaseClient.auth.signOut();
+            window.location.href = "/";
         }
 
         function goToStripe() {
-            // URL do seu Checkout do Stripe
-            window.location.href = "https://buy.stripe.com/exemplo_pro_zapbudget";
+            window.location.href = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01";
         }
 
         init();

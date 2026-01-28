@@ -3,4 +3,5 @@ uvicorn
 supabase
 pydantic-settings
 python-multipart
-weasyprint
+python-dotenv
+fpdf2
