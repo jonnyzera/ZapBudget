@@ -382,8 +382,8 @@
         const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        const API_URL = "http://127.0.0.1:8000";
+
+        const API_URL = window.location.origin + "/api";
         let currentUser = null;
 
         lucide.createIcons();

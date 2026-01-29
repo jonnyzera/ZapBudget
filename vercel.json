@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/app/main.py" },
-    { "source": "/(.*)", "destination": "/app/main.py" }
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/manifest.json", "destination": "/api/manifest.json" },
+    { "source": "/service-worker.js", "destination": "/api/service-worker.js" },
+    { "source": "/(.*)", "destination": "/app/templates/site.html" }
   ]
 }
