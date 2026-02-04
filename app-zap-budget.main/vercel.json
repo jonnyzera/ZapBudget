@@ -1,8 +1,12 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/manifest.json", "destination": "/api/manifest.json" },
-    { "source": "/service-worker.js", "destination": "/api/service-worker.js" },
-    { "source": "/(.*)", "destination": "/app/templates/site.html" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

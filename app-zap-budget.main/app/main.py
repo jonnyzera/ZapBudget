@@ -8,6 +8,7 @@ import os
 import stripe
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
+from app.main import app
 
 # Importação das rotas de PDF (Certifique-se de usar fpdf2 no budgets.py para Vercel)
 try:
