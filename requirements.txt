@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+supabase
+pydantic-settings
+python-multipart
+python-dotenv
+fpdf2
+stripe
