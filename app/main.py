@@ -20,6 +20,11 @@ load_dotenv()
 
 app = FastAPI()
 
+# Adicione isto logo depois de 'app = FastAPI()'
+@app.get("/")
+def read_root():
+    return {"message": "A API está online! Aceda a /index.html para ver o site."}
+
 # Configuração de Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
