@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client
@@ -23,7 +23,7 @@ app = FastAPI()
 # Adicione isto logo depois de 'app = FastAPI()'
 @app.get("/")
 def read_root():
-    return {"message": "A API está online! Aceda a /index.html para ver o site."}
+    return RedirectResponse(url="/index.html")
 
 # Configuração de Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
