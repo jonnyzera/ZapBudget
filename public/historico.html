@@ -17,14 +17,9 @@
             padding-bottom: 90px;
         }
 
-        .budget-card {
-            transition: all 0.2s ease;
-        }
-        .budget-card:active {
-            transform: scale(0.98);
-        }
+        .budget-card { transition: all 0.2s ease; }
+        .budget-card:hover { transform: translateY(-2px); }
 
-        /* Skeleton loader animation */
         .skeleton {
             background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
             background-size: 200% 100%;
@@ -34,11 +29,18 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1rem;
+        }
     </style>
 </head>
 <body class="text-slate-900">
 
-    <!-- NAV SUPERIOR -->
     <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -47,9 +49,7 @@
                 </div>
                 <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
             </div>
-            <div id="user-info" class="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                Carregando...
-            </div>
+            <div id="user-info" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando...</div>
         </div>
     </nav>
 
@@ -57,150 +57,97 @@
         <header class="mb-8 flex justify-between items-end">
             <div>
                 <h1 class="text-3xl font-black text-slate-900 tracking-tight">Histórico</h1>
-                <p class="text-slate-500 font-medium">Todos os seus orçamentos gerados.</p>
+                <p class="text-slate-500 font-medium">Gerencie o status das suas vendas.</p>
             </div>
-            <a href="site.html" class="bg-green-600 text-white p-3 rounded-2xl shadow-lg shadow-green-100 active:scale-95 transition-all">
+            <a href="index.html" class="bg-green-600 text-white p-3 rounded-2xl shadow-lg shadow-green-100 active:scale-95 transition-all">
                 <i data-lucide="plus" class="w-6 h-6"></i>
             </a>
         </header>
 
-        <!-- STATUS DE ASSINATURA -->
         <div id="status-card" class="mb-6 hidden">
             <div class="bg-slate-900 rounded-[24px] p-5 text-white flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <div class="bg-yellow-400 p-2 rounded-xl text-slate-900">
-                        <i data-lucide="crown" class="w-5 h-5 fill-current"></i>
-                    </div>
+                    <div class="bg-yellow-400 p-2 rounded-xl text-slate-900"><i data-lucide="crown" class="w-5 h-5 fill-current"></i></div>
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Status da Conta</p>
-                        <p id="account-status-text" class="font-bold">Usuário Trial (7 dias)</p>
+                        <p id="account-status-text" class="font-bold italic">Usuário Trial</p>
                     </div>
                 </div>
-                <button onclick="window.location.href='#'" class="text-xs font-black bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-all uppercase tracking-tighter">
-                    Upgrade
-                </button>
+                <button onclick="window.location.href='pro.html'" class="text-xs font-black bg-white/10 px-4 py-2 rounded-full uppercase">Upgrade</button>
             </div>
         </div>
 
-        <!-- LISTA DE ORÇAMENTOS -->
         <div id="budget-list" class="space-y-4">
-            <!-- Skeleton Loaders -->
-            <div class="skeleton h-24 w-full rounded-3xl"></div>
             <div class="skeleton h-24 w-full rounded-3xl"></div>
             <div class="skeleton h-24 w-full rounded-3xl"></div>
         </div>
     </main>
 
-    <!-- BOTTOM NAVIGATION (PWA Mobile) -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden no-print">
-        <a href="site.html" class="flex flex-col items-center gap-1 text-slate-400">
-            <i data-lucide="plus-circle" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Novo</span>
-        </a>
-        <a href="historico.html" class="flex flex-col items-center gap-1 text-green-600">
-            <i data-lucide="history" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Histórico</span>
-        </a>
-        <button onclick="alert('Funcionalidade Premium em breve!')" class="flex flex-col items-center gap-1 text-slate-400">
-            <i data-lucide="crown" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Pro</span>
-        </button>
-    </div>
-
     <script>
-        // CONFIGURAÇÕES SUPABASE
         const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
         let currentUser = null;
 
-        lucide.createIcons();
-
-        // 1. VERIFICAR LOGIN
         async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                window.location.href = "site.html"; // Redireciona se não estiver logado
-                return;
-            }
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = "index.html"; return; }
             currentUser = session.user;
             document.getElementById('user-info').innerText = currentUser.email.split('@')[0];
-            
-            await Promise.all([
-                loadProfileStatus(),
-                loadBudgets()
-            ]);
+            await Promise.all([loadProfileStatus(), loadBudgets()]);
         }
 
-        // 2. CARREGAR STATUS DO TRIAL/PREMIUM
-        async function loadProfileStatus() {
-            const { data: profile } = await supabase
-                .table('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-
-            if (profile) {
-                const statusCard = document.getElementById('status-card');
-                const statusText = document.getElementById('account-status-text');
-                statusCard.classList.remove('hidden');
-
-                if (profile.is_premium) {
-                    statusText.innerText = "Assinante Pro Ativo";
-                } else {
-                    // Calcular dias restantes
-                    const trialStart = new Date(profile.trial_start);
-                    const hoje = new Date();
-                    const diffTime = Math.abs(hoje - trialStart);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    const restantes = 7 - diffDays;
-                    statusText.innerText = restantes > 0 ? `Trial: ${restantes} dias restantes` : "Período Trial Expirado";
-                }
-            }
+        async function updateStatus(id, newStatus) {
+            const { error } = await supabaseClient.from('orçamentos').update({ status: newStatus }).eq('id', id);
+            if (error) alert("Erro ao atualizar status");
         }
 
-        // 3. CARREGAR ORÇAMENTOS
         async function loadBudgets() {
             const container = document.getElementById('budget-list');
-            
-            const { data: budgets, error } = await supabase
-                .table('orçamentos')
+            const { data: budgets, error } = await supabaseClient
+                .from('orçamentos')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                container.innerHTML = `<p class="text-center text-red-500 font-bold p-10">Erro ao carregar dados.</p>`;
+            if (error || budgets.length === 0) {
+                container.innerHTML = `<div class='text-center py-20 opacity-40 font-bold'>Nenhum orçamento encontrado.</div>`;
                 return;
             }
 
-            if (budgets.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-20 bg-white rounded-[40px] border border-slate-100">
-                        <i data-lucide="folder-open" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
-                        <p class="text-slate-400 font-bold">Nenhum orçamento encontrado.</p>
-                        <a href="site.html" class="text-green-600 font-black text-xs uppercase mt-4 block tracking-widest">Criar meu primeiro</a>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
+            container.innerHTML = budgets.map(b => {
+                const status = b.status || 'Pendente';
+                const statusColors = {
+                    'Pendente': 'text-slate-400',
+                    'Enviado': 'text-blue-500',
+                    'Aprovado': 'text-green-600',
+                    'Recusado': 'text-red-500'
+                };
 
-            container.innerHTML = budgets.map(b => `
-                <div class="budget-card bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between gap-4">
+                return `
+                <div class="budget-card bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
-                        <div class="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400">
+                        <div class="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center ${statusColors[status]}">
                             <i data-lucide="file-text" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h4 class="font-black text-slate-900 truncate max-w-[150px] sm:max-w-none">${b.client_name || 'Cliente sem nome'}</h4>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                                ${new Date(b.created_at).toLocaleDateString('pt-BR')} • ${b.valor}
-                            </p>
+                            <h4 class="font-black text-slate-900 truncate max-w-[180px]">${b.client_name || 'Sem nome'}</h4>
+                            <div class="flex items-center gap-2">
+                                <select onchange="updateStatus('${b.id}', this.value)" class="text-[10px] font-black uppercase tracking-widest bg-transparent border-none p-0 focus:ring-0 cursor-pointer ${statusColors[status]}">
+                                    <option value="Pendente" ${status === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                                    <option value="Enviado" ${status === 'Enviado' ? 'selected' : ''}>Enviado</option>
+                                    <option value="Aprovado" ${status === 'Aprovado' ? 'selected' : ''}>Aprovado</option>
+                                    <option value="Recusado" ${status === 'Recusado' ? 'selected' : ''}>Recusado</option>
+                                </select>
+                                <span class="text-[10px] text-slate-300">•</span>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">${b.valor}</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 self-end sm:self-center">
+                        <button onclick="location.href='index.html?edit=${b.id}'" class="bg-slate-50 text-slate-600 p-3 rounded-xl hover:bg-slate-100 transition-all">
+                            <i data-lucide="edit-3" class="w-5 h-5"></i>
+                        </button>
                         <button onclick="copyLink('${b.id}')" class="bg-slate-50 text-slate-600 p-3 rounded-xl hover:bg-green-50 hover:text-green-600 transition-all">
                             <i data-lucide="share-2" class="w-5 h-5"></i>
                         </button>
@@ -208,21 +155,29 @@
                             <i data-lucide="external-link" class="w-5 h-5"></i>
                         </a>
                     </div>
-                </div>
-            `).join('');
-
+                </div>`;
+            }).join('');
             lucide.createIcons();
         }
 
+        async function loadProfileStatus() {
+            const { data: profile } = await supabaseClient.table('profiles').select('*').eq('id', currentUser.id).single();
+            if (profile) {
+                document.getElementById('status-card').classList.remove('hidden');
+                const statusText = document.getElementById('account-status-text');
+                if (profile.is_premium) {
+                    statusText.innerText = "Assinante Pro Ativo";
+                } else {
+                    const diffDays = Math.ceil(Math.abs(new Date() - new Date(profile.trial_start)) / (1000 * 60 * 60 * 24));
+                    const restantes = Math.max(0, 7 - diffDays);
+                    statusText.innerText = restantes > 0 ? `Trial: ${restantes} dias` : "Expirado";
+                }
+            }
+        }
+
         function copyLink(id) {
-            const link = `https://zapbudget.site/view.html?id=${id}`;
-            const tempInput = document.createElement("input");
-            tempInput.value = link;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
-            alert("Link copiado para a área de transferência!");
+            const link = `${window.location.origin}/view.html?id=${id}`;
+            navigator.clipboard.writeText(link).then(() => alert("Link copiado!"));
         }
 
         checkAuth();

@@ -128,6 +128,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 lg:py-12">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            
             <div class="lg:col-span-5 space-y-8 no-print">
                 <div class="space-y-2">
                     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Criar Orçamento</h1>
@@ -367,31 +368,8 @@
         </div>
     </div>
 
-    <div id="upgradeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter border-t-8 border-green-500 text-center">
-            <h3 class="text-2xl font-black text-slate-900">Seu Trial Expirou ⏳</h3>
-            <p class="text-slate-500 font-medium">Assine o Pro para continuar enviando orçamentos ilimitados.</p>
-            <button onclick="goToStripe()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-lg shadow-xl active:scale-95">
-                ASSINAR POR R$ 19,90/mês
-            </button>
-        </div>
-    </div>
-
-    <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
-            <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
-                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900">Limpar dados?</h3>
-            <div class="flex gap-3">
-                <button onclick="hideModalReset()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
-                <button onclick="resetAll()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl">Limpar</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // CONFIGURAÇÕES SUPABASE - Padronizado para o projeto pxwsebt...
+        // CONFIGURAÇÕES SUPABASE
         const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -402,16 +380,62 @@
 
         lucide.createIcons();
 
-        // Gerenciamento de UI do Botão Google
-        const googleBtnContent = `
-            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Continuar com Google
-        `;
+        // --- LÓGICA DE EDIÇÃO ---
+        async function checkEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+
+            if (editId) {
+                showToast("Carregando dados para edição...");
+                try {
+                    const { data: orcamento, error } = await supabaseClient
+                        .from('orçamentos')
+                        .select('*')
+                        .eq('id', editId)
+                        .single();
+
+                    if (error) throw error;
+
+                    // Preenche os campos do formulário
+                    document.getElementById('vendorName').value = orcamento.vendor_name || '';
+                    document.getElementById('clientName').value = orcamento.client_name || '';
+                    document.getElementById('serviceDescription').value = orcamento.servicos || '';
+                    document.getElementById('totalValue').value = orcamento.valor || '';
+                    document.getElementById('deliveryTime').value = orcamento.prazo || '';
+                    document.getElementById('paymentMethod').value = orcamento.pagamento || '';
+                    document.getElementById('expiryDate').value = orcamento.validade || '';
+
+                    updatePreview();
+                    showToast("Pronto para editar!");
+                } catch (err) {
+                    console.error("Erro ao carregar edição:", err);
+                    showToast("Não foi possível carregar os dados.", "error");
+                }
+            }
+        }
+
+        // Listener de Sessão
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            currentUser = session?.user || null;
+            if (event === 'SIGNED_IN' && currentUser) {
+                const provider = currentUser.app_metadata.provider || 'email';
+                await supabaseClient.from('profiles').upsert({
+                    id: currentUser.id,
+                    provider: provider,
+                    full_name: currentUser.user_metadata?.full_name || '',
+                    cpf: currentUser.user_metadata?.cpf || '',
+                    trial_start: new Date().toISOString()
+                }, { onConflict: 'id' });
+                
+                updateUserNav();
+                checkEditMode(); 
+                window.history.replaceState({}, document.title, window.location.pathname);
+                closeAuthModal();
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                updateUserNav();
+            }
+        });
 
         function toggleAuthMode(mode) {
             authMode = mode;
@@ -443,14 +467,17 @@
         function resetAuthButtons() {
             const googleBtn = document.getElementById('google-btn');
             const emailBtn = document.getElementById('auth-btn');
-            if (googleBtn) {
-                googleBtn.disabled = false;
-                googleBtn.innerHTML = googleBtnContent;
-            }
-            if (emailBtn) {
-                emailBtn.disabled = false;
-                emailBtn.innerText = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO ZAPBUDGET";
-            }
+            const googleContent = `
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continuar com Google
+            `;
+            if (googleBtn) { googleBtn.disabled = false; googleBtn.innerHTML = googleContent; }
+            if (emailBtn) { emailBtn.disabled = false; emailBtn.innerText = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO ZAPBUDGET"; }
         }
 
         window.addEventListener('focus', resetAuthButtons);
@@ -469,30 +496,6 @@
             }, 3000);
         }
 
-        // Listener de Sessão Corrigido
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            currentUser = session?.user || null;
-            if (event === 'SIGNED_IN' && currentUser) {
-                const provider = currentUser.app_metadata.provider || 'email';
-                // Salva ou atualiza perfil
-                await supabaseClient.from('profiles').upsert({
-                    id: currentUser.id,
-                    provider: provider,
-                    full_name: currentUser.user_metadata?.full_name || '',
-                    cpf: currentUser.user_metadata?.cpf || '',
-                    trial_start: new Date().toISOString()
-                }, { onConflict: 'id' });
-                
-                updateUserNav();
-                window.history.replaceState({}, document.title, window.location.pathname);
-                closeAuthModal();
-            } else if (event === 'SIGNED_OUT') {
-                currentUser = null;
-                updateUserNav();
-            }
-        });
-
-        // Função de Nav Corrigida
         function updateUserNav() {
             const nav = document.getElementById('user-nav');
             if (currentUser) {
@@ -510,7 +513,6 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        // Lógica de Formulário e Preview
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
 
@@ -555,6 +557,9 @@
         async function shareWhatsApp() {
             const btn = document.getElementById('btnZap');
             const original = btn.innerHTML;
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+
             const payload = {
                 user_id: currentUser.id,
                 vendor_name: document.getElementById('vendorName').value || 'Profissional',
@@ -573,21 +578,41 @@
 
             try {
                 btn.disabled = true;
-                btn.innerText = "Processando...";
-                const res = await fetch(`${API_URL}/orcamentos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.status === 402) { showUpgradeModal(); return; }
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                const link = `${window.location.origin}/view.html?id=${data.id}`;
+                btn.innerText = "Salvando...";
+
+                let resId;
+                if (editId) {
+                    const { error } = await supabaseClient
+                        .from('orçamentos')
+                        .update(payload)
+                        .eq('id', editId);
+                    
+                    if (error) throw error;
+                    resId = editId;
+                } else {
+                    const res = await fetch(`${API_URL}/orcamentos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.status === 402) { 
+                        document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); 
+                        return; 
+                    }
+                    const data = await res.json();
+                    resId = data.id;
+                }
+
+                const link = `${window.location.origin}/view.html?id=${resId}`;
                 const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
+                
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-                showToast("Orçamento gerado!");
-            } catch {
-                showToast("Erro no servidor.", "error");
+                showToast(editId ? "Orçamento atualizado!" : "Orçamento gerado!");
+                
+                if (editId) setTimeout(() => window.location.href = 'historico.html', 1500); 
+            } catch (err) {
+                console.error(err);
+                showToast("Erro ao processar.", "error");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = original;
@@ -595,66 +620,80 @@
             }
         }
 
-        // Auth Manual
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
             const btn = document.getElementById('auth-btn');
 
+            btn.disabled = true;
+            btn.innerText = "Aguarde...";
+
             if (authMode === 'signup') {
                 const name = document.getElementById('auth-name').value;
                 const cpf = document.getElementById('auth-cpf').value;
                 const confirmPassword = document.getElementById('auth-confirm-password').value;
 
-                if (!name || !cpf) return showToast("Preencha Nome e CPF.", "error");
-                if (password !== confirmPassword) return showToast("As senhas não batem.", "error");
+                if (!name || !cpf) { showToast("Preencha Nome e CPF.", "error"); resetAuthButtons(); return; }
+                if (password !== confirmPassword) { showToast("As senhas não coincidem.", "error"); resetAuthButtons(); return; }
                 
-                btn.disabled = true;
-                btn.innerText = "Criando conta...";
                 const { error } = await supabaseClient.auth.signUp({
                     email, password,
                     options: { data: { full_name: name, cpf: cpf } }
                 });
                 if (error) { showToast(error.message, "error"); resetAuthButtons(); }
-                else { showToast("Conta criada! Verifique seu e-mail."); closeAuthModal(); }
+                else { showToast("Sucesso! Verifique seu e-mail."); closeAuthModal(); }
             } else {
-                btn.disabled = true;
-                btn.innerText = "Entrando...";
                 const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) { showToast("Dados incorretos.", "error"); resetAuthButtons(); }
-                else { showToast("Bem-vindo!"); closeAuthModal(); }
+                else { showToast("Bem-vindo de volta!"); closeAuthModal(); }
             }
         }
 
-        // Login Google Corrigido
         async function handleGoogleLogin() {
             const btn = document.getElementById('google-btn');
             btn.disabled = true;
-            btn.innerHTML = "A redirecionar...";
-            
-            // Redirecionamento dinâmico baseado no ambiente
-            const redirectUrl = window.location.origin;
-
+            btn.innerText = "Conectando...";
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
-                options: { 
-                    redirectTo: redirectUrl
-                }
+                options: { redirectTo: window.location.origin }
             });
         }
 
-        // Funções de Modal
         function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
         function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); resetAuthButtons(); }
-        function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
         function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
         function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
         async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
         function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
         function goToStripe() { window.location.href = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01"; }
         
+        // Inicialização
         updatePreview();
+        if (currentUser) checkEditMode();
     </script>
+
+    <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+            <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">Limpar dados?</h3>
+            <div class="flex gap-3">
+                <button onclick="hideModalReset()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                <button onclick="resetAll()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl">Limpar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="upgradeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter border-t-8 border-green-500 text-center">
+            <h3 class="text-2xl font-black text-slate-900">Seu Trial Expirou ⏳</h3>
+            <p class="text-slate-500 font-medium">Assine o Pro para continuar enviando orçamentos ilimitados.</p>
+            <button onclick="goToStripe()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-lg shadow-xl active:scale-95">
+                ASSINAR POR R$ 19,90/mês
+            </button>
+        </div>
+    </div>
 </body>
 </html>
