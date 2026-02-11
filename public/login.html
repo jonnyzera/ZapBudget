@@ -120,56 +120,55 @@
         lucide.createIcons();
 
         async function handleAuth(e) {
-            e.preventDefault();
-            const btn = document.getElementById('auth-btn');
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            
-            // Início do feedback real de carregamento
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AUTENTICANDO...`;
-            lucide.createIcons();
+    e.preventDefault();
+    const btn = document.getElementById('auth-btn');
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AUTENTICANDO...`;
+    lucide.createIcons();
 
-            try {
-                // Tenta realizar o login
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
+    try {
+        let { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
 
-                if (error) {
-                    // Se o login falhar, tenta registrar um novo utilizador para o Trial
-                    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-                        email: email,
-                        password: password,
-                    });
-
-                    if (signUpError) throw signUpError;
-                    
-                    btn.classList.replace('bg-green-600', 'bg-slate-900');
-                    btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> CONTA CRIADA!`;
-                } else {
-                    btn.classList.replace('bg-green-600', 'bg-slate-900');
-                    btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> BEM-VINDO!`;
-                }
-
-                lucide.createIcons();
-                
-                // Redireciona após o feedback de sucesso
-                setTimeout(() => {
-                    window.location.href = "/"; 
-                }, 800);
-
-            } catch (err) {
-                console.error("Erro na autenticação:", err.message);
-                alert("Erro: " + err.message);
-                
-                // Reseta o botão em caso de falha para permitir nova tentativa
-                btn.disabled = false;
-                btn.innerHTML = `ATIVAR TESTE GRATUITO`;
-                lucide.createIcons();
-            }
+        // Se o utilizador não existir, tenta criar conta
+        if (error) {
+            const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+            });
+            if (signUpError) throw signUpError;
+            data = signUpData;
         }
+
+        // --- NOVA LÓGICA: Sincronizar o Provider com a tabela Profiles ---
+        if (data.user) {
+            const provider = data.user.app_metadata.provider || 'email';
+            
+            // Faz o upsert (insere ou atualiza) no perfil
+            await supabaseClient.from('profiles').upsert({
+                id: data.user.id,
+                provider: provider,
+                trial_start: new Date().toISOString()
+            }, { onConflict: 'id' });
+        }
+
+        btn.classList.replace('bg-green-600', 'bg-slate-900');
+        btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
+        
+        setTimeout(() => { window.location.href = "/"; }, 800);
+
+    } catch (err) {
+        console.error("Erro:", err.message);
+        alert("Erro: " + err.message);
+        btn.disabled = false;
+        btn.innerHTML = `ATIVAR TESTE GRATUITO`;
+    }
+}
 
         async function handleGoogleLogin() {
             try {
