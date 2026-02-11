@@ -5,40 +5,32 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from supabase import create_client
 from dotenv import load_dotenv
 
-# --- CONFIGURAÇÃO DE AMBIENTE ---
-# Carrega .env apenas se existir (evita erro em produção se não tiver arquivo)
+# Tenta importar as rotas de PDF. 
+# O try/except evita que a API quebre inteira se houver erro no fpdf2
+try:
+    from app.routes import budgets
+except ImportError as e:
+    print(f"AVISO: Não foi possível carregar o módulo de PDF: {e}")
+    budgets = None
+
+# Carrega variáveis de ambiente
 load_dotenv()
 
 app = FastAPI()
 
 # --- CONFIGURAÇÃO DE CORS ---
+# Permite que o frontend (gerido pelo Vercel) fale com o backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://zapbudget.com.br", 
-        "https://zapbudget.vercel.app",
-        "http://localhost:3000", # Útil para testes locais
-        "*" # Temporário para debug, pode remover depois
-    ],
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# --- CONFIGURAÇÃO DE DIRETÓRIOS ---
-# Garante que os caminhos funcionem tanto localmente quanto na Vercel
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(APP_DIR)
-PUBLIC_DIR = os.path.join(ROOT_DIR, "public")
-
-print(f"Diretório Raiz: {ROOT_DIR}")
-print(f"Diretório Público: {PUBLIC_DIR}")
 
 # --- INTEGRAÇÕES ---
 
@@ -55,9 +47,14 @@ if SUPABASE_URL and SUPABASE_KEY:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     except Exception as e:
-        print(f"Erro ao conectar Supabase: {e}")
+        print(f"Erro CRÍTICO ao conectar Supabase: {e}")
 else:
-    print("AVISO CRÍTICO: Variáveis SUPABASE_URL ou KEY não encontradas.")
+    print("AVISO: Variáveis SUPABASE não encontradas.")
+
+# --- INCLUSÃO DE ROTAS EXTRAS (PDF) ---
+# Adiciona a rota /api/orcamentos/{id}/pdf
+if budgets:
+    app.include_router(budgets.router, prefix="/api/orcamentos", tags=["PDF"])
 
 # --- MODELOS DE DADOS ---
 
@@ -85,10 +82,12 @@ async def signup_manual(user: UserSignUp):
         raise HTTPException(status_code=500, detail="Erro de configuração no servidor (Supabase).")
     
     try:
+        # 1. Verifica se CPF já existe
         check_cpf = supabase.table("profiles").select("id").eq("cpf", user.cpf).execute()
         if check_cpf.data:
             raise HTTPException(status_code=400, detail="Este CPF já está cadastrado.")
 
+        # 2. Cria usuário no Supabase Auth
         auth_res = supabase.auth.sign_up({
             "email": user.email,
             "password": user.password,
@@ -103,6 +102,7 @@ async def signup_manual(user: UserSignUp):
         if not auth_res.user:
             raise HTTPException(status_code=400, detail="Erro ao criar conta de autenticação.")
 
+        # 3. Cria perfil na tabela profiles
         supabase.table("profiles").upsert({
             "id": auth_res.user.id,
             "full_name": user.name,
@@ -114,7 +114,6 @@ async def signup_manual(user: UserSignUp):
 
         return {"status": "success", "message": "Conta criada com sucesso!"}
     except Exception as e:
-        # Pega a mensagem de erro limpa se possível
         msg = str(e)
         if "detail" in msg: 
             msg = e.detail if hasattr(e, 'detail') else str(e)
@@ -166,9 +165,11 @@ async def salvar_orcamento(dados: Orcamento):
         raise HTTPException(status_code=500, detail="Banco de dados indisponível.")
 
     try:
+        # Verifica Trial / Premium
         res_profile = supabase.table("profiles").select("*").eq("id", dados.user_id).execute()
         
         if not res_profile.data:
+            # Se não tiver perfil, cria um trial básico
             new_profile = {
                 "id": dados.user_id,
                 "trial_start": datetime.now(timezone.utc).isoformat(),
@@ -184,8 +185,9 @@ async def salvar_orcamento(dados: Orcamento):
             start_str = profile["trial_start"].replace("Z", "+00:00")
             trial_start = datetime.fromisoformat(start_str)
             if datetime.now(timezone.utc) > (trial_start + timedelta(days=7)):
-                raise HTTPException(status_code=402, detail="Teste expirado.")
+                raise HTTPException(status_code=402, detail="Teste expirado. Faça o upgrade para continuar.")
 
+        # Salva o orçamento
         payload = dados.model_dump(exclude_none=True)
         res_budget = supabase.table("orçamentos").insert(payload).execute()
         
@@ -210,27 +212,7 @@ async def buscar_orcamento(id: str):
     except Exception:
         raise HTTPException(status_code=404, detail="Erro ao buscar orçamento")
 
-# --- ROTAS DE ARQUIVOS (FRONTEND) ---
-
-@app.get("/")
-async def read_root():
-    # Caminho explícito para garantir que encontra o arquivo
-    index_path = os.path.join(PUBLIC_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"error": "Arquivo index.html não encontrado no deploy.", "path_buscado": index_path}
-
-@app.get("/manifest.json")
-async def serve_manifest():
-    return FileResponse(os.path.join(ROOT_DIR, "manifest.json"))
-
-@app.get("/service-worker.js")
-async def serve_sw():
-    return FileResponse(os.path.join(ROOT_DIR, "service-worker.js"))
-
-# --- MONTAGEM DE ARQUIVOS ESTÁTICOS ---
-# Importante: Fica por último para não atrapalhar as rotas da API
-if os.path.isdir(PUBLIC_DIR):
-    app.mount("/", StaticFiles(directory=PUBLIC_DIR, html=True), name="public")
-else:
-    print(f"AVISO: Pasta public não encontrada em {PUBLIC_DIR}")
+# Rota de health check para a Vercel não reclamar
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok", "pdf_module": budgets is not None}
