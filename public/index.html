@@ -299,16 +299,16 @@
     </div>
 
     <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-[40px] p-8 max-w-md w-full shadow-2xl space-y-8 modal-enter my-8">
+        <div class="bg-white rounded-[40px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter my-8">
             <div class="text-center">
                 <div class="bg-green-600 w-16 h-16 rounded-2xl text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-100">
                     <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
                 </div>
-                <h2 id="auth-title" class="text-3xl font-black text-slate-900 tracking-tight uppercase">Começar 7 Dias Grátis</h2>
-                <p id="auth-subtitle" class="text-slate-500 mt-3 font-medium px-4">Crie sua conta em segundos para enviar este orçamento e profissionalizar seu negócio.</p>
+                <h2 id="auth-title" class="text-2xl font-black text-slate-900 tracking-tight uppercase">Profissionalize seu Negócio</h2>
+                <p id="auth-subtitle" class="text-slate-500 mt-2 text-sm font-medium">Salve seus orçamentos e envie via WhatsApp com sua marca.</p>
             </div>
 
-            <button onclick="handleGoogleLogin()" id="google-btn" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-6 active:scale-95 transition-all">
+            <button onclick="handleGoogleLogin()" id="google-btn" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-2 active:scale-95 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -318,28 +318,52 @@
                 Continuar com Google
             </button>
 
-            <div class="relative flex items-center gap-4 mb-6">
+            <div class="relative flex items-center gap-4">
                 <div class="flex-1 h-px bg-slate-100"></div>
-                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">ou e-mail</span>
+                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">ou manual</span>
                 <div class="flex-1 h-px bg-slate-100"></div>
             </div>
 
-            <form onsubmit="handleAuth(event)" class="space-y-5">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
-                    <input type="email" id="auth-email" required placeholder="exemplo@gmail.com" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+            <div class="flex bg-slate-50 p-1 rounded-2xl">
+                <button onclick="toggleAuthMode('login')" id="btn-tab-login" class="flex-1 py-2 text-xs font-bold rounded-xl bg-white shadow-sm transition-all">Entrar</button>
+                <button onclick="toggleAuthMode('signup')" id="btn-tab-signup" class="flex-1 py-2 text-xs font-bold text-slate-400 transition-all">Cadastrar</button>
+            </div>
+
+            <form onsubmit="handleAuth(event)" class="space-y-4">
+                <div id="signup-fields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nome Completo</label>
+                        <input type="text" id="auth-name" placeholder="Ex: João Silva" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">CPF (Apenas números)</label>
+                        <input type="text" id="auth-cpf" maxlength="11" placeholder="00000000000" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Senha</label>
-                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="exemplo@gmail.com" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
                 </div>
+                
+                <div class="grid grid-cols-1 gap-4" id="password-grid">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Senha</label>
+                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                    <div id="confirm-pass-field" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Confirmar Senha</label>
+                        <input type="password" id="auth-confirm-password" placeholder="••••••••" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                </div>
+
                 <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl active:scale-95">
                     ATIVAR TESTE GRATUITO
                 </button>
             </form>
 
-            <div class="mt-8 text-center">
-                <button onclick="closeAuthModal()" class="text-sm font-bold text-slate-400 hover:text-slate-600">Talvez mais tarde</button>
+            <div class="mt-4 text-center">
+                <button onclick="closeAuthModal()" class="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-tighter">Agora não</button>
             </div>
         </div>
     </div>
@@ -375,10 +399,11 @@
 
         const API_URL = window.location.origin + "/api";
         let currentUser = null;
+        let authMode = 'login'; // 'login' ou 'signup'
 
         lucide.createIcons();
 
-        // Salva o conteúdo original do botão do Google para poder resetar
+        // Salva o conteúdo original do botão do Google
         const googleBtnContent = `
             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -389,7 +414,33 @@
             Continuar com Google
         `;
 
-        // Função para resetar botões travados (Importante para Desktop)
+        function toggleAuthMode(mode) {
+            authMode = mode;
+            const signupFields = document.getElementById('signup-fields');
+            const confirmPass = document.getElementById('confirm-pass-field');
+            const btnText = document.getElementById('auth-btn');
+            const tabLogin = document.getElementById('btn-tab-login');
+            const tabSignup = document.getElementById('btn-tab-signup');
+
+            if (mode === 'signup') {
+                signupFields.classList.remove('hidden');
+                confirmPass.classList.remove('hidden');
+                btnText.innerText = "CRIAR CONTA GRÁTIS";
+                tabSignup.classList.add('bg-white', 'shadow-sm');
+                tabSignup.classList.remove('text-slate-400');
+                tabLogin.classList.remove('bg-white', 'shadow-sm');
+                tabLogin.classList.add('text-slate-400');
+            } else {
+                signupFields.classList.add('hidden');
+                confirmPass.classList.add('hidden');
+                btnText.innerText = "ENTRAR NO ZAPBUDGET";
+                tabLogin.classList.add('bg-white', 'shadow-sm');
+                tabLogin.classList.remove('text-slate-400');
+                tabSignup.classList.remove('bg-white', 'shadow-sm');
+                tabSignup.classList.add('text-slate-400');
+            }
+        }
+
         function resetAuthButtons() {
             const googleBtn = document.getElementById('google-btn');
             const emailBtn = document.getElementById('auth-btn');
@@ -399,11 +450,10 @@
             }
             if (emailBtn) {
                 emailBtn.disabled = false;
-                emailBtn.innerText = "ATIVAR TESTE GRATUITO";
+                emailBtn.innerText = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO ZAPBUDGET";
             }
         }
 
-        // Reseta botões quando a aba ganha foco novamente (usuário voltou do redirecionamento)
         window.addEventListener('focus', resetAuthButtons);
 
         function showToast(message, type = 'success') {
@@ -420,27 +470,22 @@
             }, 3000);
         }
 
-        // --- SISTEMA DE AUTENTICAÇÃO ---
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
-            
             if (event === 'SIGNED_IN' && currentUser) {
                 const provider = currentUser.app_metadata.provider || 'email';
-                
                 await supabaseClient.from('profiles').upsert({
                     id: currentUser.id,
                     provider: provider,
+                    full_name: currentUser.user_metadata?.full_name || '',
+                    cpf: currentUser.user_metadata?.cpf || '',
                     trial_start: new Date().toISOString()
                 }, { onConflict: 'id' });
-
                 updateUserNav();
-                // Limpa tokens da URL no Desktop para evitar bugs
                 window.history.replaceState({}, document.title, window.location.pathname);
                 closeAuthModal();
             } else if (event === 'SIGNED_OUT') {
                 currentUser = null;
-                updateUserNav();
-            } else {
                 updateUserNav();
             }
         });
@@ -457,7 +502,6 @@
             }
         }
 
-        // Lógica de Inputs e Preview
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
 
@@ -492,7 +536,7 @@
 
         async function handleMainAction() {
             if (!currentUser) { 
-                showToast("Por favor, entre para enviar o orçamento.", "error");
+                showToast("Quase lá! Crie sua conta para enviar.", "error");
                 showAuthModal(); 
                 return; 
             }
@@ -526,21 +570,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
-                if (res.status === 402) { 
-                    showUpgradeModal(); 
-                    return; 
-                }
-                
+                if (res.status === 402) { showUpgradeModal(); return; }
                 if (!res.ok) throw new Error();
-                
                 const data = await res.json();
                 const link = `https://zapbudget.site/view.html?id=${data.id}`;
                 const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
                 showToast("Orçamento gerado!");
             } catch {
-                showToast("Erro ao conectar com o servidor.", "error");
+                showToast("Erro no servidor.", "error");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = original;
@@ -553,28 +591,29 @@
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
             const btn = document.getElementById('auth-btn');
-            
-            if (password.length < 6) {
-                showToast("A senha deve ter pelo menos 6 caracteres.", "error");
-                return;
-            }
 
-            btn.disabled = true;
-            btn.innerText = "A processar...";
-            
-            let { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                let { error: signUpError } = await supabaseClient.auth.signUp({ email, password });
-                if (signUpError) {
-                    showToast(signUpError.message, "error");
-                    resetAuthButtons();
-                } else {
-                    showToast("Conta criada! Verifique o e-mail.");
-                    closeAuthModal();
-                }
+            if (authMode === 'signup') {
+                const name = document.getElementById('auth-name').value;
+                const cpf = document.getElementById('auth-cpf').value;
+                const confirmPassword = document.getElementById('auth-confirm-password').value;
+
+                if (!name || !cpf) return showToast("Preencha Nome e CPF.", "error");
+                if (password !== confirmPassword) return showToast("As senhas não batem.", "error");
+                
+                btn.disabled = true;
+                btn.innerText = "Criando conta...";
+                const { error } = await supabaseClient.auth.signUp({
+                    email, password,
+                    options: { data: { full_name: name, cpf: cpf } }
+                });
+                if (error) { showToast(error.message, "error"); resetAuthButtons(); }
+                else { showToast("Conta criada! Verifique seu e-mail."); closeAuthModal(); }
             } else {
-                showToast("Bem-vindo!");
-                closeAuthModal();
+                btn.disabled = true;
+                btn.innerText = "Entrando...";
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) { showToast("Dados incorretos.", "error"); resetAuthButtons(); }
+                else { showToast("Bem-vindo!"); closeAuthModal(); }
             }
         }
 
@@ -582,43 +621,19 @@
             const btn = document.getElementById('google-btn');
             btn.disabled = true;
             btn.innerHTML = "A redirecionar...";
-            
-            const { error } = await supabaseClient.auth.signInWithOAuth({
+            await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: window.location.origin + '/'
-                }
+                options: { redirectTo: window.location.origin + '/' }
             });
-
-            if (error) {
-                showToast("Erro Google: " + error.message, "error");
-                resetAuthButtons();
-            }
         }
 
-        // Funções de Modal
         function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
-        function closeAuthModal() { 
-            document.getElementById('authModal').classList.replace('flex', 'hidden'); 
-            resetAuthButtons();
-        }
+        function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); resetAuthButtons(); }
         function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
         function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
         function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
-        
-        async function handleLogout() { 
-            await supabaseClient.auth.signOut(); 
-            showToast("Sessão encerrada.");
-            setTimeout(() => location.reload(), 500);
-        }
-
-        function resetAll() { 
-            inputs.forEach(id => document.getElementById(id).value = ''); 
-            updatePreview(); 
-            hideModalReset(); 
-            showToast("Dados limpos.");
-        }
-        
+        async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
+        function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
         function goToStripe() { window.location.href = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01"; }
         
         updatePreview();

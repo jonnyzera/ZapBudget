@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from supabase import create_client
 import os
 import stripe
@@ -19,36 +19,28 @@ load_dotenv()
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return RedirectResponse(url="/index.html")
-
-# Configuração de Stripe
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
-
-# Configuração de CORS
+# --- CONFIGURAÇÃO DE CORS (CORRIGIDA) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://zapbudget.com.br", 
         "https://www.zapbudget.com.br",
         "http://localhost:3000",
-        "https://zapbudget.vercel.app"
-        "http://127.0.0.1:3000" # Adicione esta variação para desktop
+        "https://zapbudget.vercel.app", # Vírgula adicionada para evitar erro de sintaxe
+        "http://127.0.0.1:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Registro do endpoint de PDF
-if budgets:
-    app.include_router(budgets.router, prefix="/api/v1/pdf", tags=["PDF"])
-
-# --- CONFIGURAÇÃO DE DIRETÓRIOS ---
+# --- CONFIGURAÇÃO DE DIRETÓRIOS E CLIENTES ---
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(CURRENT_DIR)
+
+# Configuração de Stripe
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 # Credenciais Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -59,7 +51,8 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 else:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Modelo de Dados
+# --- MODELOS DE DADOS ---
+
 class Orcamento(BaseModel):
     user_id: str
     vendor_name: str
@@ -69,6 +62,53 @@ class Orcamento(BaseModel):
     prazo: str = None
     pagamento: str = None
     validade: str = None 
+
+# Novo modelo para o Cadastro Manual (E-mail, CPF, Senha)
+class UserSignUp(BaseModel):
+    name: str
+    email: EmailStr
+    cpf: str
+    password: str
+
+# --- ROTAS DE AUTENTICAÇÃO ---
+
+@app.post("/api/auth/signup")
+async def signup_manual(user: UserSignUp):
+    try:
+        # 1. Verificar se o CPF já existe na tabela profiles para evitar duplicidade
+        check_cpf = supabase.table("profiles").select("id").eq("cpf", user.cpf).execute()
+        if check_cpf.data:
+            raise HTTPException(status_code=400, detail="Este CPF já está cadastrado.")
+
+        # 2. Criar usuário no Supabase Auth
+        # O Supabase já valida nativamente se o e-mail é único
+        auth_res = supabase.auth.sign_up({
+            "email": user.email,
+            "password": user.password,
+            "options": {
+                "data": {
+                    "full_name": user.name,
+                    "cpf": user.cpf
+                }
+            }
+        })
+
+        if not auth_res.user:
+            raise HTTPException(status_code=400, detail="Erro ao criar conta de autenticação.")
+
+        # 3. Criar o perfil na sua tabela 'profiles' para controle de trial/premium
+        supabase.table("profiles").upsert({
+            "id": auth_res.user.id,
+            "full_name": user.name,
+            "cpf": user.cpf,
+            "trial_start": datetime.now(timezone.utc).isoformat(),
+            "is_premium": False,
+            "provider": "email"
+        }).execute()
+
+        return {"status": "success", "message": "Conta criada com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # --- ROTAS DE PAGAMENTO (STRIPE WEBHOOK) ---
 
@@ -108,13 +148,9 @@ async def stripe_webhook(request: Request):
 @app.post("/api/orcamentos")
 async def salvar_orcamento(dados: Orcamento):
     try:
-        # Busca o perfil do usuário
         res_profile = supabase.table("profiles").select("*").eq("id", dados.user_id).execute()
         
         if not res_profile.data:
-            # Se o perfil não existir (ex: primeiro orçamento), cria um novo
-            # Nota: O campo 'provider' será preenchido como 'email' por padrão aqui, 
-            # mas o login.html cuidará de atualizar para 'google' se necessário.
             new_profile = {
                 "id": dados.user_id,
                 "trial_start": datetime.now(timezone.utc).isoformat(),
@@ -126,14 +162,12 @@ async def salvar_orcamento(dados: Orcamento):
         else:
             profile = res_profile.data[0]
 
-        # Verificação de Trial (7 dias)
         if not profile.get("is_premium", False):
             start_str = profile["trial_start"].replace("Z", "+00:00")
             trial_start = datetime.fromisoformat(start_str)
             if datetime.now(timezone.utc) > (trial_start + timedelta(days=7)):
                 raise HTTPException(status_code=402, detail="Teste expirado.")
 
-        # Insere o orçamento
         payload = dados.model_dump(exclude_none=True)
         res_budget = supabase.table("orçamentos").insert(payload).execute()
         
@@ -154,7 +188,15 @@ async def buscar_orcamento(id: str):
     except Exception:
         raise HTTPException(status_code=404, detail="Erro ao buscar orçamento")
 
-# --- ROTAS PARA ARQUIVOS ESTÁTICOS ---
+# --- ROTAS GERAIS E PDF ---
+
+if budgets:
+    app.include_router(budgets.router, prefix="/api/v1/pdf", tags=["PDF"])
+
+@app.get("/")
+def read_root():
+    return RedirectResponse(url="/index.html")
+
 @app.get("/api/manifest.json")
 async def serve_manifest():
     return FileResponse(os.path.join(ROOT_DIR, "manifest.json"))
@@ -163,5 +205,4 @@ async def serve_manifest():
 async def serve_sw():
     return FileResponse(os.path.join(ROOT_DIR, "service-worker.js"))
 
-# Export para a Vercel
 app = app
