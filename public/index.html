@@ -491,16 +491,21 @@
         });
 
         function updateUserNav() {
-            const nav = document.getElementById('user-nav');
-            if (currentUser) {
-                nav.innerHTML = `
-                    <span class="text-xs font-bold text-slate-400 hidden sm:block">${currentUser.email}</span>
-                    <button onclick="handleLogout()" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold">Sair</button>
-                `;
-            } else {
-                nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
-            }
-        }
+    const nav = document.getElementById('user-nav');
+    if (currentUser) {
+        nav.innerHTML = `
+            <div class="flex items-center gap-3">
+                <a href="historico.html" class="text-xs font-bold text-green-600 uppercase tracking-widest bg-green-50 px-3 py-2 rounded-lg">
+                    <i data-lucide="history" class="w-4 h-4 inline mr-1"></i> Meus Orçamentos
+                </a>
+                <button onclick="handleLogout()" class="text-xs font-bold text-slate-400 hover:text-red-500 uppercase">Sair</button>
+            </div>
+        `;
+    } else {
+        nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
+    }
+    if (window.lucide) lucide.createIcons();
+}
 
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
