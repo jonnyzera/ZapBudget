@@ -2,8 +2,9 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Orçamento Profissional - ZapBudget</title>
+    <link rel="icon" type="image/png" href="/img/favicon (3).png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -12,6 +13,7 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .paper {
@@ -20,7 +22,7 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.05);
             width: 100%;
             max-width: 800px;
-            margin: 2rem auto;
+            margin: 1rem auto;
             border-radius: 12px;
             overflow: hidden;
         }
@@ -39,7 +41,6 @@
             .paper { box-shadow: none; margin: 0; width: 100%; border: 1px solid #eee; border-radius: 0; }
         }
 
-        /* Loading Animation */
         .shimmer {
             background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
             background-size: 200% 100%;
@@ -51,106 +52,100 @@
         }
     </style>
 </head>
-<body class="p-4 sm:p-8">
+<body class="p-2 sm:p-8">
 
-    <!-- BARRA DE AÇÕES (PÚBLICA) -->
-    <div class="max-w-[800px] mx-auto mb-8 flex justify-between items-center no-print">
-        <div class="flex items-center gap-2">
+    <div class="max-w-[800px] mx-auto mb-6 flex justify-between items-center no-print px-2">
+        <a href="index.html" class="flex items-center gap-2">
             <div class="bg-green-600 p-1.5 rounded-lg text-white">
-                <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
             </div>
-            <span class="font-bold text-lg text-slate-900 tracking-tight">Zap<span class="text-green-600">Budget</span></span>
-        </div>
-        <div class="flex gap-3">
-            <button onclick="window.print()" class="bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-all">
-                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
-            </button>
-        </div>
+            <span class="font-bold text-base text-slate-900 tracking-tight">Zap<span class="text-green-600">Budget</span></span>
+        </a>
+        <button onclick="window.print()" class="bg-slate-900 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg active:scale-95 transition-all">
+            <i data-lucide="printer" class="w-4 h-4 text-green-400"></i> PDF
+        </button>
     </div>
 
-    <!-- LOADER -->
-    <div id="loader" class="max-w-[800px] mx-auto space-y-6">
+    <div id="loader" class="max-w-[800px] mx-auto space-y-6 px-2">
         <div class="shimmer h-20 w-1/3 rounded-2xl"></div>
         <div class="shimmer h-32 w-full rounded-2xl"></div>
         <div class="shimmer h-64 w-full rounded-2xl"></div>
     </div>
 
-    <!-- CONTEÚDO DO ORÇAMENTO -->
     <div id="content" class="paper hidden">
-        <div class="p-8 sm:p-16">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-8 mb-16">
-                <div class="space-y-3">
-                    <h2 id="viewVendor" class="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none">---</h2>
-                    <div class="inline-block bg-slate-900 text-white text-[10px] font-black px-3 py-1 uppercase tracking-[0.2em] rounded">
+        <div class="p-6 sm:p-16">
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-12">
+                <div class="space-y-2">
+                    <h2 id="viewVendor" class="text-2xl sm:text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none">---</h2>
+                    <div class="inline-block bg-slate-900 text-white text-[9px] font-black px-2 py-1 uppercase tracking-[0.2em] rounded">
                         Proposta Comercial
                     </div>
                 </div>
-                <div class="text-left sm:text-right border-l-2 sm:border-l-0 sm:border-r-2 border-slate-100 pl-4 sm:pl-0 sm:pr-4">
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Data de Emissão</p>
-                    <p id="viewDate" class="text-sm font-bold text-slate-800">--/--/----</p>
+                <div class="text-left sm:text-right border-l-4 sm:border-l-0 sm:border-r-4 border-slate-100 pl-4 sm:pl-0 sm:pr-4">
+                    <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Emissão</p>
+                    <p id="viewDate" class="text-xs font-bold text-slate-800">--/--/----</p>
                 </div>
             </div>
 
-            <div class="mb-12 border-l-8 border-green-500 bg-slate-50 p-8 rounded-r-3xl">
-                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Apresentado para:</p>
-                <h3 id="viewClient" class="text-2xl font-black text-slate-900 tracking-tight">---</h3>
+            <div class="mb-10 border-l-8 border-green-500 bg-slate-50 p-6 sm:p-8 rounded-r-3xl">
+                <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Apresentado para:</p>
+                <h3 id="viewClient" class="text-xl font-black text-slate-900 tracking-tight">---</h3>
             </div>
 
-            <div class="space-y-10">
+            <div class="space-y-8">
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
-                        <h4 class="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">Descrição dos Serviços</h4>
+                        <h4 class="text-[9px] text-slate-400 font-black uppercase tracking-[0.3em]">Descrição dos Serviços</h4>
                         <div class="flex-1 h-px bg-slate-100"></div>
                     </div>
-                    <div id="viewService" class="text-slate-700 text-base whitespace-pre-wrap leading-relaxed min-h-[150px] font-medium">---</div>
+                    <div id="viewService" class="text-slate-700 text-sm sm:text-base whitespace-pre-wrap leading-relaxed min-h-[120px] font-medium italic">---</div>
                 </div>
                 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 border-t border-slate-100">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                     <div class="flex items-start gap-3">
                         <div class="bg-slate-50 p-2 rounded-lg text-slate-400">
-                            <i data-lucide="calendar" class="w-5 h-5"></i>
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
                         </div>
                         <div>
-                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Prazo Estimado</p>
+                            <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">Prazo Estimado</p>
                             <p id="viewDelivery" class="text-sm font-bold text-slate-800">---</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-3">
                         <div class="bg-slate-50 p-2 rounded-lg text-slate-400">
-                            <i data-lucide="credit-card" class="w-5 h-5"></i>
+                            <i data-lucide="credit-card" class="w-4 h-4"></i>
                         </div>
                         <div>
-                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Condição de Pagamento</p>
+                            <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">Condição de Pagamento</p>
                             <p id="viewPayment" class="text-sm font-bold text-slate-800">---</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-20">
-                <div class="pt-10 border-t-8 border-slate-900 flex flex-col sm:flex-row justify-between items-end gap-6">
-                    <p id="viewExpiry" class="text-[11px] text-red-500 font-black uppercase tracking-widest italic bg-red-50 px-3 py-1 rounded-full"></p>
+            <div class="mt-16">
+                <div class="pt-8 border-t-8 border-slate-900 flex flex-col sm:flex-row justify-between items-end gap-6">
+                    <p id="viewExpiry" class="text-[10px] text-red-500 font-black uppercase tracking-widest italic bg-red-50 px-3 py-1 rounded-full"></p>
                     <div class="text-right w-full sm:w-auto">
-                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Investimento Total</p>
-                        <p id="viewPrice" class="text-5xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
+                        <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Investimento Total</p>
+                        <p id="viewPrice" class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
                     </div>
                 </div>
                 
-                <div class="mt-16 pt-10 border-t border-slate-100 text-center">
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">Atenciosamente,</p>
-                    <p id="viewVendorSignature" class="text-xl font-black text-slate-900 uppercase italic tracking-tight"></p>
-                    <div class="w-16 h-1.5 bg-green-500 mx-auto rounded-full mt-4 mb-6"></div>
-                    <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.5em]">Documento Oficial ZapBudget SaaS</p>
+                <div class="mt-12 pt-8 border-t border-slate-100 text-center">
+                    <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-2">Atenciosamente,</p>
+                    <p id="viewVendorSignature" class="text-lg font-black text-slate-900 uppercase italic tracking-tight"></p>
+                    <div class="w-12 h-1 bg-green-500 mx-auto rounded-full mt-2 mb-4"></div>
+                    <p class="text-[8px] text-slate-300 font-black uppercase tracking-[0.5em]">Documento Oficial ZapBudget</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- FOOTER PÚBLICO -->
-    <div class="max-w-[800px] mx-auto mt-8 text-center no-print">
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-            <i data-lucide="shield-check" class="w-3 h-3 text-green-500"></i>
-            Proposta segura e verificada
+    <div class="max-w-[800px] mx-auto mt-6 text-center no-print">
+        <p class="text-[9px] text-slate-300 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+            <i data-lucide="shield-check" class="w-3 h-3"></i>
+            Link de visualização segura
         </p>
     </div>
 
@@ -164,10 +159,9 @@
 
             if (!id) {
                 document.getElementById('loader').innerHTML = `
-                    <div class="bg-red-50 text-red-600 p-8 rounded-3xl border border-red-100 inline-block">
-                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-4"></i>
-                        <p class="font-black uppercase tracking-widest text-sm">Erro: Link Inválido</p>
-                        <p class="text-xs mt-2 opacity-80">O ID do orçamento não foi encontrado na URL.</p>
+                    <div class="text-center py-20">
+                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-red-500 mb-4"></i>
+                        <p class="font-black uppercase text-slate-900 text-sm">Link Inválido</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -175,15 +169,11 @@
             }
 
             try {
-                // Simulação de delay para o shimmer aparecer (opcional)
-                // await new Promise(r => setTimeout(r, 800));
-
                 const response = await fetch(`${API_URL}/orcamentos/${id}`);
                 if (!response.ok) throw new Error();
                 
                 const data = await response.json();
 
-                // Preencher campos
                 document.getElementById('viewVendor').innerText = data.vendor_name;
                 document.getElementById('viewVendorSignature').innerText = data.vendor_name;
                 document.getElementById('viewClient').innerText = data.client_name;
@@ -200,17 +190,15 @@
                     document.getElementById('viewExpiry').classList.add('hidden');
                 }
 
-                // Mostrar conteúdo e esconder loader
                 document.getElementById('loader').classList.add('hidden');
                 document.getElementById('content').classList.remove('hidden');
                 lucide.createIcons();
 
             } catch (error) {
                 document.getElementById('loader').innerHTML = `
-                    <div class="bg-red-50 text-red-600 p-8 rounded-3xl border border-red-100 inline-block">
-                        <i data-lucide="alert-triangle" class="w-12 h-12 mx-auto mb-4"></i>
-                        <p class="font-black uppercase tracking-widest text-sm">Orçamento não encontrado</p>
-                        <p class="text-xs mt-2 opacity-80">Este orçamento pode ter expirado ou o link está incorreto.</p>
+                    <div class="text-center py-20">
+                        <i data-lucide="frown" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                        <p class="font-black uppercase text-slate-400 text-sm">Orçamento não encontrado</p>
                     </div>
                 `;
                 lucide.createIcons();

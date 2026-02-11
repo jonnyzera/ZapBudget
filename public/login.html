@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -51,7 +51,7 @@
 </head>
 <body class="bg-[#f8fafc] text-slate-900 min-h-screen flex flex-col items-center justify-center p-6">
 
-    <a href="/" class="absolute top-8 left-6 md:left-12 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-900 transition-all group">
+    <a href="index.html" class="absolute top-8 left-6 md:left-12 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-900 transition-all group">
         <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i> 
         Voltar
     </a>
@@ -61,8 +61,8 @@
             <div class="bg-green-600 w-16 h-16 rounded-2xl text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-100">
                 <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
             </div>
-            <h2 id="auth-title" class="text-3xl font-black text-slate-900 tracking-tight uppercase">Começar 7 Dias Grátis</h2>
-            <p id="auth-subtitle" class="text-slate-500 mt-3 font-medium px-4">Crie sua conta em segundos para enviar este orçamento e profissionalizar seu negócio.</p>
+            <h2 id="auth-title" class="text-3xl font-black text-slate-900 tracking-tight uppercase">Acesse sua Conta</h2>
+            <p id="auth-subtitle" class="text-slate-500 mt-3 font-medium px-4">Entre para gerenciar seus orçamentos e profissionalizar seu negócio.</p>
         </div>
 
         <div class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-2xl shadow-slate-200/40">
@@ -95,12 +95,12 @@
                 </div>
 
                 <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-2 mt-2">
-                    ATIVAR TESTE GRATUITO
+                    ENTRAR NO SISTEMA
                 </button>
             </form>
 
             <div class="mt-8 text-center">
-                <a href="/" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">Talvez mais tarde</a>
+                <a href="index.html" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">Talvez mais tarde</a>
             </div>
         </div>
         
@@ -112,7 +112,6 @@
     </div>
 
     <script>
-        // ATUALIZADO: Usando o ID correto do seu projeto
         const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -130,12 +129,13 @@
             lucide.createIcons();
 
             try {
+                // Tenta login primeiro
                 let { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: password,
                 });
 
-                // Se o utilizador não existir, tenta criar conta
+                // Se der erro (usuário não existe), tenta cadastrar
                 if (error) {
                     const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
                         email: email,
@@ -145,11 +145,9 @@
                     data = signUpData;
                 }
 
-                // Sincronizar o Provedor com a tabela Profiles
                 if (data.user) {
                     const provider = data.user.app_metadata.provider || 'email';
-                    
-                    // Faz o upsert no perfil para garantir que o provider seja salvo
+                    // Upsert do perfil
                     await supabaseClient.from('profiles').upsert({
                         id: data.user.id,
                         provider: provider,
@@ -160,13 +158,14 @@
                 btn.classList.replace('bg-green-600', 'bg-slate-900');
                 btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
                 
-                setTimeout(() => { window.location.href = "/"; }, 800);
+                // Redireciona para o APP (gerador) após login
+                setTimeout(() => { window.location.href = "app.html"; }, 800);
 
             } catch (err) {
                 console.error("Erro:", err.message);
-                alert("Erro: " + err.message);
+                alert("Erro ao acessar: " + err.message);
                 btn.disabled = false;
-                btn.innerHTML = `ATIVAR TESTE GRATUITO`;
+                btn.innerHTML = `ENTRAR NO SISTEMA`;
                 lucide.createIcons();
             }
         }
@@ -176,7 +175,7 @@
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/'
+                        redirectTo: window.location.origin + '/app.html' // Redireciona para o APP
                     }
                 });
                 if (error) throw error;

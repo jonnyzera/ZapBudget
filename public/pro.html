@@ -43,12 +43,12 @@
 
     <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
+            <a href="index.html" class="flex items-center gap-2">
                 <div class="bg-green-600 p-1.5 rounded-lg text-white">
                     <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
                 </div>
                 <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
-            </div>
+            </a>
             <button onclick="handleLogout()" class="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors">
                 Sair
             </button>
@@ -132,7 +132,7 @@
     </main>
 
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] no-print">
-        <a href="/" class="flex flex-col items-center gap-1 text-slate-400">
+        <a href="app.html" class="flex flex-col items-center gap-1 text-slate-400">
             <i data-lucide="plus-circle" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Novo</span>
         </a>
@@ -158,7 +158,7 @@
         async function init() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
-                window.location.href = "/";
+                window.location.href = "login.html"; // Redireciona para login se não logado
                 return;
             }
             currentUser = session.user;
@@ -170,7 +170,7 @@
         async function loadStatus() {
             try {
                 const { data: profile } = await supabaseClient
-                    .table('profiles')
+                    .from('profiles')
                     .select('*')
                     .eq('id', currentUser.id)
                     .single();
@@ -198,7 +198,8 @@
                         
                         const trialStart = new Date(profile.trial_start);
                         const hoje = new Date();
-                        const diffDays = Math.floor((hoje - trialStart) / (1000 * 60 * 60 * 24));
+                        const diffTime = Math.abs(hoje - trialStart);
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                         const restantes = Math.max(0, 7 - diffDays);
                         document.getElementById('days-left').innerText = `${restantes} dias`;
                     }
@@ -210,23 +211,17 @@
 
         async function handleLogout() {
             await supabaseClient.auth.signOut();
-            window.location.href = "/";
+            window.location.href = "index.html"; // Volta para a home
         }
 
-        // FUNÇÃO DE PAGAMENTO ATUALIZADA PARA PRODUÇÃO
         function goToStripe() {
             if (!currentUser) return;
             
             const btn = document.getElementById('btn-subscribe');
-            const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = "Redirecionando...";
 
-            // Seu Link de Pagamento do Stripe
             const stripeBaseUrl = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01";
-            
-            // O parâmetro client_reference_id é o que permite ao seu backend
-            // (no arquivo main.py) saber qual usuário do Supabase realizou a compra.
             const checkoutUrl = `${stripeBaseUrl}?client_reference_id=${currentUser.id}&prefilled_email=${encodeURIComponent(currentUser.email)}`;
             
             window.location.href = checkoutUrl;
