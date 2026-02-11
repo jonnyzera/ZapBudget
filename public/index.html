@@ -623,14 +623,23 @@
         }
 
         async function handleGoogleLogin() {
-            const btn = document.getElementById('google-btn');
-            btn.disabled = true;
-            btn.innerHTML = "A redirecionar...";
-            await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin + '/' }
-            });
+         const btn = document.getElementById('google-btn');
+         btn.disabled = true;
+         btn.innerHTML = "A redirecionar...";
+    
+    // Define a URL de destino: se estiver no localhost, usa localhost. Se estiver na web, usa o domínio.
+        const redirectUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+            ? window.location.origin 
+        : "https://zapbudget.vercel.app"; // COLOQUE SEU DOMÍNIO REAL AQUI
+
+    await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { 
+            redirectTo: redirectUrl,
+            queryParams: { access_type: 'offline', prompt: 'consent' }
         }
+    });
+}
 
         function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
         function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); resetAuthButtons(); }
