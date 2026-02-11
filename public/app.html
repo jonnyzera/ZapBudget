@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZapBudget - Orçamentos Profissionais</title>
+    <link rel="icon" type="image/png" href="/img/favicon (3).png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#16a34a">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 80px; 
+        }
+
+        .receipt-preview {
+            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
+
+        .paper {
+            background: white;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .paper::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .receipt-preview { background: none !important; padding: 0 !important; border: none !important; }
+            .paper { box-shadow: none !important; border: 1px solid #eee; margin: 0; width: 100%; min-height: auto; }
+        }
+
+        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .google-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+        .google-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            width: 90%;
+            max-width: 400px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            animation: toastIn 0.3s ease-out forwards;
+            pointer-events: auto;
+            border-left: 4px solid #16a34a;
+        }
+
+        .toast.error { border-left-color: #ef4444; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 min-h-screen">
+
+    <div id="toast-container"></div>
+
+    <nav class="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-green-600 p-1.5 rounded-lg text-white">
+                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
+            </div>
+            <div id="user-nav" class="flex items-center gap-4">
+                <button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            
+            <div class="lg:col-span-5 space-y-8 no-print">
+                <div class="space-y-2">
+                    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Criar Orçamento</h1>
+                    <p class="text-slate-500 font-medium">Preencha os campos abaixo para gerar o documento.</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
+                            <i data-lucide="user" class="w-4 h-4"></i> Identificação
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Sua Empresa ou Nome</label>
+                                <input type="text" id="vendorName" placeholder="Ex: João Silva Reformas" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nome do Cliente</label>
+                                <input type="text" id="clientName" placeholder="Ex: Maria Oliveira" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
+                            <i data-lucide="briefcase" class="w-4 h-4"></i> Detalhes do Serviço
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Descrição Detalhada</label>
+                            <textarea id="serviceDescription" rows="4" placeholder="O que será realizado?" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Prazo de Entrega</label>
+                                <input type="text" id="deliveryTime" placeholder="Ex: 5 dias úteis" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Forma de Pagamento</label>
+                                <input type="text" id="paymentMethod" placeholder="Ex: 50% ato" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-2">
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
+                            <i data-lucide="dollar-sign" class="w-4 h-4"></i> Valor e Validade
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Valor Total</label>
+                                <input type="text" id="totalValue" placeholder="R$ 0,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-lg font-bold text-green-700 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Validade do Orçamento</label>
+                                <input type="date" id="expiryDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-5 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 text-lg active:scale-[0.98]">
+                        <i data-lucide="printer" class="w-6 h-6 text-green-400"></i>
+                        Gerar PDF / Imprimir
+                    </button>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button id="btnZap" onclick="handleMainAction()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md active:scale-[0.98]">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i> Enviar WhatsApp
+                        </button>
+                        
+                        <button onclick="showModalReset()" class="w-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Limpar Tudo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7">
+                <div class="sticky top-24">
+                    <div class="mb-4 flex items-center justify-between no-print px-2 sm:px-0">
+                        <span class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            <i data-lucide="eye" class="w-4 h-4"></i> Visualização
+                        </span>
+                        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase">Enquadramento Automático</span>
+                    </div>
+
+                    <div id="previewArea" class="receipt-preview rounded-[24px] sm:rounded-[32px] p-3 sm:p-8 lg:p-12 border border-slate-200 transition-all overflow-hidden">
+                        <div class="paper rounded-sm p-6 sm:p-12 min-h-[600px] flex flex-col justify-between overflow-hidden">
+                            <div>
+                                <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-12">
+                                    <div class="space-y-2">
+                                        <h2 id="previewVendor" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tighter uppercase break-words">SUA EMPRESA</h2>
+                                        <div class="inline-block bg-slate-900 text-white text-[10px] font-black px-2 py-1 uppercase tracking-tighter">
+                                            Proposta Comercial
+                                        </div>
+                                    </div>
+                                    <div class="text-left sm:text-right">
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Emissão</p>
+                                        <p id="currentDate" class="text-sm font-bold text-slate-800">--/--/----</p>
+                                    </div>
+                                </div>
+
+                                <div class="mb-12 border-l-4 border-green-500 bg-slate-50 p-6 rounded-r-xl">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Para:</p>
+                                    <h3 id="previewClient" class="text-lg sm:text-xl font-bold text-slate-900 break-words">Nome do Cliente</h3>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <div class="border-b-2 border-slate-100 pb-2">
+                                        <h4 class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Serviços / Produtos</h4>
+                                    </div>
+                                    <div id="previewService" class="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap min-h-[100px] break-words">
+                                        Os detalhes aparecerão aqui...
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4 sm:gap-8 pt-8 border-t border-slate-100">
+                                        <div>
+                                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Prazo</p>
+                                            <p id="previewDelivery" class="text-xs sm:text-sm font-semibold text-slate-800">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Pagamento</p>
+                                            <p id="previewPayment" class="text-xs sm:text-sm font-semibold text-slate-800">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-12 space-y-12">
+                                <div class="pt-8 border-t-4 border-slate-900 flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4">
+                                    <div class="order-2 sm:order-1 text-left w-full sm:w-auto">
+                                        <p id="previewExpiry" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic"></p>
+                                    </div>
+                                    <div class="text-right order-1 sm:order-2 w-full sm:w-auto">
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Investimento Total</p>
+                                        <p id="previewPrice" class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
+                                    </div>
+                                </div>
+
+                                <div class="pt-8 border-t border-slate-100 flex flex-col items-center text-center">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Atenciosamente,</p>
+                                    <p class="text-sm sm:text-base font-extrabold text-slate-900 uppercase italic">ZapBudget</p>
+                                    <div class="w-12 h-1 bg-green-500 mt-2 mb-4 rounded-full"></div>
+                                    <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.3em]">Software Profissional</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden no-print">
+        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-green-600">
+            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Novo</span>
+        </button>
+        <button onclick="window.location.href='historico.html'" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="history" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Histórico</span>
+        </button>
+        <button onclick="window.location.href='pro.html'" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="crown" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Pro</span>
+        </button>
+    </div>
+
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[40px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter my-8">
+            <div class="text-center">
+                <div class="bg-green-600 w-16 h-16 rounded-2xl text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-100">
+                    <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
+                </div>
+                <h2 id="auth-title" class="text-2xl font-black text-slate-900 tracking-tight uppercase">Profissionalize seu Negócio</h2>
+                <p id="auth-subtitle" class="text-slate-500 mt-2 text-sm font-medium">Salve seus orçamentos e envie via WhatsApp com sua marca.</p>
+            </div>
+
+            <button onclick="handleGoogleLogin()" id="google-btn" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-2 active:scale-95 transition-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continuar com Google
+            </button>
+
+            <div class="relative flex items-center gap-4">
+                <div class="flex-1 h-px bg-slate-100"></div>
+                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">ou manual</span>
+                <div class="flex-1 h-px bg-slate-100"></div>
+            </div>
+
+            <div class="flex bg-slate-50 p-1 rounded-2xl">
+                <button onclick="toggleAuthMode('login')" id="btn-tab-login" class="flex-1 py-2 text-xs font-bold rounded-xl bg-white shadow-sm transition-all">Entrar</button>
+                <button onclick="toggleAuthMode('signup')" id="btn-tab-signup" class="flex-1 py-2 text-xs font-bold text-slate-400 transition-all">Cadastrar</button>
+            </div>
+
+            <form onsubmit="handleAuth(event)" class="space-y-4">
+                <div id="signup-fields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nome Completo</label>
+                        <input type="text" id="auth-name" placeholder="Ex: João Silva" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">CPF (Apenas números)</label>
+                        <input type="text" id="auth-cpf" maxlength="11" placeholder="00000000000" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="exemplo@gmail.com" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                </div>
+                
+                <div class="grid grid-cols-1 gap-4" id="password-grid">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Senha</label>
+                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                    <div id="confirm-pass-field" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Confirmar Senha</label>
+                        <input type="password" id="auth-confirm-password" placeholder="••••••••" class="w-full p-3.5 rounded-xl border border-slate-100 bg-slate-50 font-bold text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl active:scale-95">
+                    ATIVAR TESTE GRATUITO
+                </button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <button onclick="closeAuthModal()" class="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-tighter">Agora não</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÕES SUPABASE
+        const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const API_URL = window.location.origin + "/api";
+        let currentUser = null;
+        let authMode = 'login'; 
+
+        lucide.createIcons();
+
+        // --- LÓGICA DE EDIÇÃO ---
+        async function checkEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+
+            if (editId) {
+                showToast("Carregando dados para edição...");
+                try {
+                    const { data: orcamento, error } = await supabaseClient
+                        .from('orçamentos')
+                        .select('*')
+                        .eq('id', editId)
+                        .single();
+
+                    if (error) throw error;
+
+                    // Preenche os campos do formulário
+                    document.getElementById('vendorName').value = orcamento.vendor_name || '';
+                    document.getElementById('clientName').value = orcamento.client_name || '';
+                    document.getElementById('serviceDescription').value = orcamento.servicos || '';
+                    document.getElementById('totalValue').value = orcamento.valor || '';
+                    document.getElementById('deliveryTime').value = orcamento.prazo || '';
+                    document.getElementById('paymentMethod').value = orcamento.pagamento || '';
+                    document.getElementById('expiryDate').value = orcamento.validade || '';
+
+                    updatePreview();
+                    showToast("Pronto para editar!");
+                } catch (err) {
+                    console.error("Erro ao carregar edição:", err);
+                    showToast("Não foi possível carregar os dados.", "error");
+                }
+            }
+        }
+
+        // Listener de Sessão
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            currentUser = session?.user || null;
+            if (event === 'SIGNED_IN' && currentUser) {
+                const provider = currentUser.app_metadata.provider || 'email';
+                await supabaseClient.from('profiles').upsert({
+                    id: currentUser.id,
+                    provider: provider,
+                    full_name: currentUser.user_metadata?.full_name || '',
+                    cpf: currentUser.user_metadata?.cpf || '',
+                    trial_start: new Date().toISOString()
+                }, { onConflict: 'id' });
+                
+                updateUserNav();
+                checkEditMode(); 
+                window.history.replaceState({}, document.title, window.location.pathname);
+                closeAuthModal();
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                updateUserNav();
+            }
+        });
+
+        function toggleAuthMode(mode) {
+            authMode = mode;
+            const signupFields = document.getElementById('signup-fields');
+            const confirmPass = document.getElementById('confirm-pass-field');
+            const btnText = document.getElementById('auth-btn');
+            const tabLogin = document.getElementById('btn-tab-login');
+            const tabSignup = document.getElementById('btn-tab-signup');
+
+            if (mode === 'signup') {
+                signupFields.classList.remove('hidden');
+                confirmPass.classList.remove('hidden');
+                btnText.innerText = "CRIAR CONTA GRÁTIS";
+                tabSignup.classList.add('bg-white', 'shadow-sm');
+                tabSignup.classList.remove('text-slate-400');
+                tabLogin.classList.remove('bg-white', 'shadow-sm');
+                tabLogin.classList.add('text-slate-400');
+            } else {
+                signupFields.classList.add('hidden');
+                confirmPass.classList.add('hidden');
+                btnText.innerText = "ENTRAR NO ZAPBUDGET";
+                tabLogin.classList.add('bg-white', 'shadow-sm');
+                tabLogin.classList.remove('text-slate-400');
+                tabSignup.classList.remove('bg-white', 'shadow-sm');
+                tabSignup.classList.add('text-slate-400');
+            }
+        }
+
+        function resetAuthButtons() {
+            const googleBtn = document.getElementById('google-btn');
+            const emailBtn = document.getElementById('auth-btn');
+            const googleContent = `
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continuar com Google
+            `;
+            if (googleBtn) { googleBtn.disabled = false; googleBtn.innerHTML = googleContent; }
+            if (emailBtn) { emailBtn.disabled = false; emailBtn.innerText = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO ZAPBUDGET"; }
+        }
+
+        window.addEventListener('focus', resetAuthButtons);
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            const icon = type === 'error' ? 'alert-circle' : 'check-circle';
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${type === 'error' ? 'text-red-500' : 'text-green-500'}"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function updateUserNav() {
+            const nav = document.getElementById('user-nav');
+            if (currentUser) {
+                nav.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <a href="historico.html" class="text-xs font-bold text-green-600 uppercase tracking-widest bg-green-50 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                            <i data-lucide="history" class="w-4 h-4 inline mr-1"></i> Meus Orçamentos
+                        </a>
+                        <button onclick="handleLogout()" class="text-xs font-bold text-slate-400 hover:text-red-500 uppercase transition-colors">Sair</button>
+                    </div>
+                `;
+            } else {
+                nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
+
+        document.getElementById('totalValue').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, "");
+            value = (value / 100).toFixed(2) + "";
+            value = value.replace(".", ",");
+            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            e.target.value = value ? "R$ " + value : "";
+            updatePreview();
+        });
+
+        function updatePreview() {
+            document.getElementById('previewVendor').innerText = document.getElementById('vendorName').value || 'SUA EMPRESA';
+            document.getElementById('previewClient').innerText = document.getElementById('clientName').value || 'Nome do Cliente';
+            document.getElementById('previewService').innerText = document.getElementById('serviceDescription').value || 'Os detalhes aparecerão aqui...';
+            document.getElementById('previewPrice').innerText = document.getElementById('totalValue').value || 'R$ 0,00';
+            document.getElementById('previewDelivery').innerText = document.getElementById('deliveryTime').value || '-';
+            document.getElementById('previewPayment').innerText = document.getElementById('paymentMethod').value || '-';
+            const exp = document.getElementById('expiryDate').value;
+            if(exp) {
+                const [y, m, d] = exp.split('-');
+                document.getElementById('previewExpiry').innerText = `VÁLIDO ATÉ: ${d}/${m}/${y}`;
+            } else {
+                document.getElementById('previewExpiry').innerText = '';
+            }
+        }
+
+        inputs.forEach(id => {
+            if(id !== 'totalValue') document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        async function handleMainAction() {
+            if (!currentUser) { 
+                showToast("Quase lá! Crie sua conta para enviar.", "error");
+                showAuthModal(); 
+                return; 
+            }
+            await shareWhatsApp();
+        }
+
+        async function shareWhatsApp() {
+            const btn = document.getElementById('btnZap');
+            const original = btn.innerHTML;
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+
+            const payload = {
+                user_id: currentUser.id,
+                vendor_name: document.getElementById('vendorName').value || 'Profissional',
+                client_name: document.getElementById('clientName').value,
+                servicos: document.getElementById('serviceDescription').value,
+                valor: document.getElementById('totalValue').value,
+                prazo: document.getElementById('deliveryTime').value,
+                pagamento: document.getElementById('paymentMethod').value,
+                validade: document.getElementById('expiryDate').value
+            };
+
+            if (!payload.client_name || !payload.valor) {
+                showToast("Preencha o nome do cliente e o valor!", "error");
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Salvando...";
+
+                let resId;
+                if (editId) {
+                    const { error } = await supabaseClient
+                        .from('orçamentos')
+                        .update(payload)
+                        .eq('id', editId);
+                    
+                    if (error) throw error;
+                    resId = editId;
+                } else {
+                    const res = await fetch(`${API_URL}/orcamentos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.status === 402) { 
+                        document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); 
+                        return; 
+                    }
+                    const data = await res.json();
+                    resId = data.id;
+                }
+
+                const link = `${window.location.origin}/view.html?id=${resId}`;
+                const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
+                
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                showToast(editId ? "Orçamento atualizado!" : "Orçamento gerado!");
+                
+                if (editId) setTimeout(() => window.location.href = 'historico.html', 1500); 
+            } catch (err) {
+                console.error(err);
+                showToast("Erro ao processar.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                lucide.createIcons();
+            }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const btn = document.getElementById('auth-btn');
+
+            btn.disabled = true;
+            btn.innerText = "Aguarde...";
+
+            if (authMode === 'signup') {
+                const name = document.getElementById('auth-name').value;
+                const cpf = document.getElementById('auth-cpf').value;
+                const confirmPassword = document.getElementById('auth-confirm-password').value;
+
+                if (!name || !cpf) { showToast("Preencha Nome e CPF.", "error"); resetAuthButtons(); return; }
+                if (password !== confirmPassword) { showToast("As senhas não coincidem.", "error"); resetAuthButtons(); return; }
+                
+                const { error } = await supabaseClient.auth.signUp({
+                    email, password,
+                    options: { data: { full_name: name, cpf: cpf } }
+                });
+                if (error) { showToast(error.message, "error"); resetAuthButtons(); }
+                else { showToast("Sucesso! Verifique seu e-mail."); closeAuthModal(); }
+            } else {
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) { showToast("Dados incorretos.", "error"); resetAuthButtons(); }
+                else { showToast("Bem-vindo de volta!"); closeAuthModal(); }
+            }
+        }
+
+        async function handleGoogleLogin() {
+            const btn = document.getElementById('google-btn');
+            btn.disabled = true;
+            btn.innerText = "Conectando...";
+            await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
+        }
+
+        function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); resetAuthButtons(); }
+        function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
+        function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
+        async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
+        function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
+        function goToStripe() { window.location.href = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01"; }
+        
+        // Inicialização
+        updatePreview();
+        if (currentUser) checkEditMode();
+    </script>
+
+    <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+            <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">Limpar dados?</h3>
+            <div class="flex gap-3">
+                <button onclick="hideModalReset()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                <button onclick="resetAll()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl">Limpar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="upgradeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter border-t-8 border-green-500 text-center">
+            <h3 class="text-2xl font-black text-slate-900">Seu Trial Expirou ⏳</h3>
+            <p class="text-slate-500 font-medium">Assine o Pro para continuar enviando orçamentos ilimitados.</p>
+            <button onclick="goToStripe()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-lg shadow-xl active:scale-95">
+                ASSINAR POR R$ 19,90/mês
+            </button>
+        </div>
+    </div>
+</body>
+</html>

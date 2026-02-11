@@ -195,7 +195,7 @@ if budgets:
 
 @app.get("/")
 def read_root():
-    return RedirectResponse(url="/index.html")
+    return FileResponse(os.path.join(ROOT_DIR, "public", "index.html"))
 
 @app.get("/api/manifest.json")
 async def serve_manifest():
