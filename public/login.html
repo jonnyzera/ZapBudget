@@ -112,63 +112,64 @@
     </div>
 
     <script>
-        // Configurações do Supabase extraídas do seu projeto
-        const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
+        // ATUALIZADO: Usando o ID correto do seu projeto
+        const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         lucide.createIcons();
 
         async function handleAuth(e) {
-    e.preventDefault();
-    const btn = document.getElementById('auth-btn');
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AUTENTICANDO...`;
-    lucide.createIcons();
-
-    try {
-        let { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
-
-        // Se o utilizador não existir, tenta criar conta
-        if (error) {
-            const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-                email: email,
-                password: password,
-            });
-            if (signUpError) throw signUpError;
-            data = signUpData;
-        }
-
-        // --- NOVA LÓGICA: Sincronizar o Provider com a tabela Profiles ---
-        if (data.user) {
-            const provider = data.user.app_metadata.provider || 'email';
+            e.preventDefault();
+            const btn = document.getElementById('auth-btn');
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
             
-            // Faz o upsert (insere ou atualiza) no perfil
-            await supabaseClient.from('profiles').upsert({
-                id: data.user.id,
-                provider: provider,
-                trial_start: new Date().toISOString()
-            }, { onConflict: 'id' });
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AUTENTICANDO...`;
+            lucide.createIcons();
+
+            try {
+                let { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                // Se o utilizador não existir, tenta criar conta
+                if (error) {
+                    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+                        email: email,
+                        password: password,
+                    });
+                    if (signUpError) throw signUpError;
+                    data = signUpData;
+                }
+
+                // Sincronizar o Provedor com a tabela Profiles
+                if (data.user) {
+                    const provider = data.user.app_metadata.provider || 'email';
+                    
+                    // Faz o upsert no perfil para garantir que o provider seja salvo
+                    await supabaseClient.from('profiles').upsert({
+                        id: data.user.id,
+                        provider: provider,
+                        trial_start: new Date().toISOString()
+                    }, { onConflict: 'id' });
+                }
+
+                btn.classList.replace('bg-green-600', 'bg-slate-900');
+                btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
+                
+                setTimeout(() => { window.location.href = "/"; }, 800);
+
+            } catch (err) {
+                console.error("Erro:", err.message);
+                alert("Erro: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = `ATIVAR TESTE GRATUITO`;
+                lucide.createIcons();
+            }
         }
-
-        btn.classList.replace('bg-green-600', 'bg-slate-900');
-        btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
-        
-        setTimeout(() => { window.location.href = "/"; }, 800);
-
-    } catch (err) {
-        console.error("Erro:", err.message);
-        alert("Erro: " + err.message);
-        btn.disabled = false;
-        btn.innerHTML = `ATIVAR TESTE GRATUITO`;
-    }
-}
 
         async function handleGoogleLogin() {
             try {

@@ -70,6 +70,7 @@
             border-color: #cbd5e1;
         }
 
+        /* Toast Styles */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -304,8 +305,8 @@
                 <div class="bg-green-600 w-16 h-16 rounded-2xl text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-100">
                     <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
                 </div>
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight uppercase">Começar 7 Dias Grátis</h2>
-                <p class="text-slate-500 mt-3 font-medium px-4">Crie sua conta em segundos para profissionalizar seu negócio.</p>
+                <h2 id="auth-title" class="text-3xl font-black text-slate-900 tracking-tight uppercase">Começar 7 Dias Grátis</h2>
+                <p id="auth-subtitle" class="text-slate-500 mt-3 font-medium px-4">Crie sua conta em segundos para enviar este orçamento e profissionalizar seu negócio.</p>
             </div>
 
             <button onclick="handleGoogleLogin()" id="google-btn" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-6 active:scale-95 transition-all">
@@ -326,26 +327,52 @@
 
             <form onsubmit="handleAuth(event)" class="space-y-5">
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Seu E-mail</label>
                     <input type="email" id="auth-email" required placeholder="exemplo@gmail.com" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
                 </div>
+
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Senha</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Sua Senha</label>
                     <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 font-bold text-slate-700 transition-all">
                 </div>
-                <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl active:scale-95">
+
+                <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-2 mt-2">
                     ATIVAR TESTE GRATUITO
                 </button>
             </form>
 
             <div class="mt-8 text-center">
-                <button onclick="closeAuthModal()" class="text-sm font-bold text-slate-400 hover:text-slate-600">Talvez mais tarde</button>
+                <button onclick="closeAuthModal()" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">Talvez mais tarde</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="upgradeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl space-y-6 modal-enter border-t-8 border-green-500 text-center">
+            <h3 class="text-2xl font-black text-slate-900">Seu Trial Expirou ⏳</h3>
+            <p class="text-slate-500 font-medium">Assine o Pro para continuar enviando orçamentos ilimitados.</p>
+            <button onclick="goToStripe()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-lg shadow-xl active:scale-95">
+                ASSINAR POR R$ 19,90/mês
+            </button>
+        </div>
+    </div>
+
+    <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+            <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">Limpar dados?</h3>
+            <div class="flex gap-3">
+                <button onclick="hideModalReset()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                <button onclick="resetAll()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl">Limpar</button>
             </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://oqafestnsewmigjeozeh.supabase.co";
+        // ATUALIZADO: Usando o ID correto do seu projeto e sincronizando o perfil
+        const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -354,39 +381,54 @@
 
         lucide.createIcons();
 
+        // Sistema de Notificações Mobile (Toast)
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            
             const icon = type === 'error' ? 'alert-circle' : 'check-circle';
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${type === 'error' ? 'text-red-500' : 'text-green-500'}"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
+            const color = type === 'error' ? 'text-red-500' : 'text-green-500';
+            
+            toast.innerHTML = `
+                <i data-lucide="${icon}" class="w-5 h-5 ${color}"></i>
+                <span class="text-sm font-bold text-slate-700">${message}</span>
+            `;
+            
             container.appendChild(toast);
             lucide.createIcons();
+
             setTimeout(() => {
                 toast.style.animation = 'toastOut 0.3s ease-in forwards';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Observar mudanças de autenticação
+        // Observar mudanças de autenticação e sincronizar com a tabela profiles
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
+            
             if (currentUser) {
-                // Sincronizar provedor com a tabela profiles
                 const provider = currentUser.app_metadata.provider || 'email';
+                
+                // Faz o upsert no perfil para garantir que o provider seja salvo
                 await supabaseClient.from('profiles').upsert({
                     id: currentUser.id,
                     provider: provider,
                     trial_start: new Date().toISOString()
                 }, { onConflict: 'id' });
             }
+            
             updateUserNav();
         });
 
         function updateUserNav() {
             const nav = document.getElementById('user-nav');
             if (currentUser) {
-                nav.innerHTML = `<span class="text-xs font-bold text-slate-400 hidden sm:block">${currentUser.email}</span><button onclick="handleLogout()" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold">Sair</button>`;
+                nav.innerHTML = `
+                    <span class="text-xs font-bold text-slate-400 hidden sm:block">${currentUser.email}</span>
+                    <button onclick="handleLogout()" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold">Sair</button>
+                `;
             } else {
                 nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
             }
@@ -411,6 +453,7 @@
             document.getElementById('previewPrice').innerText = document.getElementById('totalValue').value || 'R$ 0,00';
             document.getElementById('previewDelivery').innerText = document.getElementById('deliveryTime').value || '-';
             document.getElementById('previewPayment').innerText = document.getElementById('paymentMethod').value || '-';
+            
             const exp = document.getElementById('expiryDate').value;
             if(exp) {
                 const [y, m, d] = exp.split('-');
@@ -421,7 +464,9 @@
         }
 
         inputs.forEach(id => {
-            if(id !== 'totalValue') document.getElementById(id).addEventListener('input', updatePreview);
+            if(id !== 'totalValue') {
+                document.getElementById(id).addEventListener('input', updatePreview);
+            }
         });
 
         async function handleMainAction() {
@@ -436,6 +481,7 @@
         async function shareWhatsApp() {
             const btn = document.getElementById('btnZap');
             const original = btn.innerHTML;
+            
             const payload = {
                 user_id: currentUser.id,
                 vendor_name: document.getElementById('vendorName').value || 'Profissional',
@@ -455,23 +501,27 @@
             try {
                 btn.disabled = true;
                 btn.innerText = "Processando...";
+
                 const res = await fetch(`${API_URL}/orcamentos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                
                 if (res.status === 402) { 
-                    alert("Seu teste expirou. Faça o upgrade para continuar."); 
+                    showUpgradeModal(); 
                     return; 
                 }
+                
                 if (!res.ok) throw new Error();
+                
                 const data = await res.json();
                 const link = `https://zapbudget.site/view.html?id=${data.id}`;
                 const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-                showToast("Sucesso!");
+                showToast("Orçamento gerado com sucesso!");
             } catch {
-                showToast("Erro no servidor.", "error");
+                showToast("Erro ao conectar com o servidor.", "error");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = original;
@@ -484,40 +534,82 @@
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
             const btn = document.getElementById('auth-btn');
-            btn.disabled = true;
-            btn.innerText = "Processando...";
-            let { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                let { error: signUpError } = await supabaseClient.auth.signUp({ email, password });
-                if (signUpError) showToast(signUpError.message, "error");
-                else showToast("Conta criada! Verifique o e-mail.");
+            
+            if (!email || password.length < 6) {
+                showToast("A senha deve ter pelo menos 6 caracteres.", "error");
+                return;
             }
-            btn.disabled = false;
-            btn.innerText = "ATIVAR TESTE GRATUITO";
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> ATIVANDO...`;
+            lucide.createIcons();
+
+            let { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                if (error.message.includes("Invalid login credentials")) {
+                    const { error: signUpError } = await supabaseClient.auth.signUp({ email, password });
+
+                    if (signUpError) {
+                        showToast(signUpError.message, "error");
+                        btn.disabled = false;
+                        btn.innerHTML = "ATIVAR TESTE GRATUITO";
+                        lucide.createIcons();
+                        return;
+                    }
+                    showToast("Conta criada! Verifique seu e-mail.");
+                } else {
+                    showToast(error.message, "error");
+                    btn.disabled = false;
+                    btn.innerHTML = "ATIVAR TESTE GRATUITO";
+                    lucide.createIcons();
+                    return;
+                }
+            } else {
+                showToast("Bem-vindo de volta!");
+            }
+
             closeAuthModal();
         }
 
         async function handleGoogleLogin() {
             const btn = document.getElementById('google-btn');
+            const original = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = "A redirecionar...";
+            
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
-                options: { redirectTo: window.location.origin }
+                options: {
+                    redirectTo: window.location.origin
+                }
             });
+
             if (error) {
-                showToast(error.message, "error");
+                showToast("Erro Google: " + error.message, "error");
                 btn.disabled = false;
-                btn.innerHTML = "Continuar com Google";
+                btn.innerHTML = original;
             }
         }
 
         function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
         function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); }
+        function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
         function showModalReset() { document.getElementById('modalReset').classList.replace('hidden', 'flex'); }
         function hideModalReset() { document.getElementById('modalReset').classList.replace('flex', 'hidden'); }
-        async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
-        function resetAll() { inputs.forEach(id => document.getElementById(id).value = ''); updatePreview(); hideModalReset(); }
+        async function handleLogout() { 
+            await supabaseClient.auth.signOut(); 
+            showToast("Sessão encerrada.");
+            location.reload(); 
+        }
+        function resetAll() { 
+            inputs.forEach(id => document.getElementById(id).value = ''); 
+            updatePreview(); 
+            hideModalReset(); 
+            showToast("Dados limpos.");
+        }
+        
+        function goToStripe() { window.location.href = "https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01"; }
         
         updatePreview();
     </script>
