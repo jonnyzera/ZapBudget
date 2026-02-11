@@ -35,8 +35,9 @@ app.add_middleware(
         "https://www.zapbudget.com.br",
         "http://localhost:3000",
         "https://zapbudget.vercel.app"
+        "http://127.0.0.1:3000" # Adicione esta variação para desktop
     ],
-    allow_origin_regex=r"https://zapbudget-.*\.vercel\.app",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
