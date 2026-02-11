@@ -6,3 +6,4 @@ python-multipart
 python-dotenv
 fpdf2
 stripe
+email-validator

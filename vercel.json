@@ -11,19 +11,11 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/manifest.json",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/service-worker.js",
-      "destination": "/api/index.py"
-    },
-    {
       "source": "/",
       "destination": "/public/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/public/$1"
     }
   ]
