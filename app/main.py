@@ -5,13 +5,14 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from supabase import create_client
 from dotenv import load_dotenv
 
-# Carrega as variáveis de ambiente
+# --- CONFIGURAÇÃO DE AMBIENTE ---
+# Carrega .env apenas se existir (evita erro em produção se não tiver arquivo)
 load_dotenv()
 
 app = FastAPI()
@@ -22,6 +23,8 @@ app.add_middleware(
     allow_origins=[
         "https://zapbudget.com.br", 
         "https://zapbudget.vercel.app",
+        "http://localhost:3000", # Útil para testes locais
+        "*" # Temporário para debug, pode remover depois
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -29,10 +32,15 @@ app.add_middleware(
 )
 
 # --- CONFIGURAÇÃO DE DIRETÓRIOS ---
-# Define o diretório raiz (ROOT_DIR) como a pasta pai de 'app'
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(CURRENT_DIR)
+# Garante que os caminhos funcionem tanto localmente quanto na Vercel
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(APP_DIR)
 PUBLIC_DIR = os.path.join(ROOT_DIR, "public")
+
+print(f"Diretório Raiz: {ROOT_DIR}")
+print(f"Diretório Público: {PUBLIC_DIR}")
+
+# --- INTEGRAÇÕES ---
 
 # Configuração de Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -42,10 +50,14 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("AVISO: Variáveis SUPABASE não configuradas.")
+supabase = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Erro ao conectar Supabase: {e}")
 else:
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    print("AVISO CRÍTICO: Variáveis SUPABASE_URL ou KEY não encontradas.")
 
 # --- MODELOS DE DADOS ---
 
@@ -69,6 +81,9 @@ class UserSignUp(BaseModel):
 
 @app.post("/api/auth/signup")
 async def signup_manual(user: UserSignUp):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Erro de configuração no servidor (Supabase).")
+    
     try:
         check_cpf = supabase.table("profiles").select("id").eq("cpf", user.cpf).execute()
         if check_cpf.data:
@@ -99,12 +114,19 @@ async def signup_manual(user: UserSignUp):
 
         return {"status": "success", "message": "Conta criada com sucesso!"}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # Pega a mensagem de erro limpa se possível
+        msg = str(e)
+        if "detail" in msg: 
+            msg = e.detail if hasattr(e, 'detail') else str(e)
+        raise HTTPException(status_code=400, detail=msg)
 
 # --- ROTAS DE PAGAMENTO (STRIPE WEBHOOK) ---
 
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
+    if not STRIPE_WEBHOOK_SECRET:
+         raise HTTPException(status_code=500, detail="Stripe Webhook Secret não configurado.")
+         
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
 
@@ -114,6 +136,9 @@ async def stripe_webhook(request: Request):
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro no Webhook: {str(e)}")
+
+    if not supabase:
+        return {"status": "ignored", "reason": "Database not configured"}
 
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
@@ -137,6 +162,9 @@ async def stripe_webhook(request: Request):
 
 @app.post("/api/orcamentos")
 async def salvar_orcamento(dados: Orcamento):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Banco de dados indisponível.")
+
     try:
         res_profile = supabase.table("profiles").select("*").eq("id", dados.user_id).execute()
         
@@ -166,10 +194,14 @@ async def salvar_orcamento(dados: Orcamento):
             
         return {"id": res_budget.data[0]['id']}
     except Exception as e:
+        print(f"Erro orcamento: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/orcamentos/{id}")
 async def buscar_orcamento(id: str):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Banco de dados indisponível.")
+        
     try:
         res = supabase.table("orçamentos").select("*").eq("id", id).execute()
         if not res.data:
@@ -178,12 +210,15 @@ async def buscar_orcamento(id: str):
     except Exception:
         raise HTTPException(status_code=404, detail="Erro ao buscar orçamento")
 
-# --- ROTAS DE ARQUIVOS ---
+# --- ROTAS DE ARQUIVOS (FRONTEND) ---
 
 @app.get("/")
-def read_root():
-    # Serve a Landing Page (antiga apresentacao.html, agora index.html)
-    return FileResponse(os.path.join(PUBLIC_DIR, "index.html"))
+async def read_root():
+    # Caminho explícito para garantir que encontra o arquivo
+    index_path = os.path.join(PUBLIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "Arquivo index.html não encontrado no deploy.", "path_buscado": index_path}
 
 @app.get("/manifest.json")
 async def serve_manifest():
@@ -193,5 +228,9 @@ async def serve_manifest():
 async def serve_sw():
     return FileResponse(os.path.join(ROOT_DIR, "service-worker.js"))
 
-# Monta a pasta public para servir app.html, historico.html, login.html e imagens
-app.mount("/", StaticFiles(directory=PUBLIC_DIR, html=True), name="public")
+# --- MONTAGEM DE ARQUIVOS ESTÁTICOS ---
+# Importante: Fica por último para não atrapalhar as rotas da API
+if os.path.isdir(PUBLIC_DIR):
+    app.mount("/", StaticFiles(directory=PUBLIC_DIR, html=True), name="public")
+else:
+    print(f"AVISO: Pasta public não encontrada em {PUBLIC_DIR}")
