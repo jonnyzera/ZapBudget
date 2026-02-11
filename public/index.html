@@ -128,7 +128,6 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 lg:py-12">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            
             <div class="lg:col-span-5 space-y-8 no-print">
                 <div class="space-y-2">
                     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Criar Orçamento</h1>
@@ -392,18 +391,18 @@
     </div>
 
     <script>
-        // CONFIGURAÇÕES SUPABASE
+        // CONFIGURAÇÕES SUPABASE - Padronizado para o projeto pxwsebt...
         const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const API_URL = window.location.origin + "/api";
         let currentUser = null;
-        let authMode = 'login'; // 'login' ou 'signup'
+        let authMode = 'login'; 
 
         lucide.createIcons();
 
-        // Salva o conteúdo original do botão do Google
+        // Gerenciamento de UI do Botão Google
         const googleBtnContent = `
             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -470,10 +469,12 @@
             }, 3000);
         }
 
+        // Listener de Sessão Corrigido
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
             if (event === 'SIGNED_IN' && currentUser) {
                 const provider = currentUser.app_metadata.provider || 'email';
+                // Salva ou atualiza perfil
                 await supabaseClient.from('profiles').upsert({
                     id: currentUser.id,
                     provider: provider,
@@ -481,6 +482,7 @@
                     cpf: currentUser.user_metadata?.cpf || '',
                     trial_start: new Date().toISOString()
                 }, { onConflict: 'id' });
+                
                 updateUserNav();
                 window.history.replaceState({}, document.title, window.location.pathname);
                 closeAuthModal();
@@ -490,23 +492,25 @@
             }
         });
 
+        // Função de Nav Corrigida
         function updateUserNav() {
-    const nav = document.getElementById('user-nav');
-    if (currentUser) {
-        nav.innerHTML = `
-            <div class="flex items-center gap-3">
-                <a href="historico.html" class="text-xs font-bold text-green-600 uppercase tracking-widest bg-green-50 px-3 py-2 rounded-lg">
-                    <i data-lucide="history" class="w-4 h-4 inline mr-1"></i> Meus Orçamentos
-                </a>
-                <button onclick="handleLogout()" class="text-xs font-bold text-slate-400 hover:text-red-500 uppercase">Sair</button>
-            </div>
-        `;
-    } else {
-        nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
-    }
-    if (window.lucide) lucide.createIcons();
-}
+            const nav = document.getElementById('user-nav');
+            if (currentUser) {
+                nav.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <a href="historico.html" class="text-xs font-bold text-green-600 uppercase tracking-widest bg-green-50 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                            <i data-lucide="history" class="w-4 h-4 inline mr-1"></i> Meus Orçamentos
+                        </a>
+                        <button onclick="handleLogout()" class="text-xs font-bold text-slate-400 hover:text-red-500 uppercase transition-colors">Sair</button>
+                    </div>
+                `;
+            } else {
+                nav.innerHTML = `<button onclick="showAuthModal()" class="text-sm font-bold text-slate-600 hover:text-green-600">Entrar</button>`;
+            }
+            if (window.lucide) lucide.createIcons();
+        }
 
+        // Lógica de Formulário e Preview
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
 
@@ -578,7 +582,7 @@
                 if (res.status === 402) { showUpgradeModal(); return; }
                 if (!res.ok) throw new Error();
                 const data = await res.json();
-                const link = `https://zapbudget.site/view.html?id=${data.id}`;
+                const link = `${window.location.origin}/view.html?id=${data.id}`;
                 const msg = `📄 *ORÇAMENTO PROFISSIONAL*\n---------------------------------\n🏢 *De:* ${payload.vendor_name}\n👤 *Cliente:* ${payload.client_name}\n💰 *Valor:* ${payload.valor}\n\n🔗 *Ver Completo:* ${link}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
                 showToast("Orçamento gerado!");
@@ -591,6 +595,7 @@
             }
         }
 
+        // Auth Manual
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('auth-email').value;
@@ -622,25 +627,24 @@
             }
         }
 
+        // Login Google Corrigido
         async function handleGoogleLogin() {
-         const btn = document.getElementById('google-btn');
-         btn.disabled = true;
-         btn.innerHTML = "A redirecionar...";
-    
-    // Define a URL de destino: se estiver no localhost, usa localhost. Se estiver na web, usa o domínio.
-        const redirectUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
-            ? window.location.origin 
-        : "https://zapbudget.vercel.app"; // COLOQUE SEU DOMÍNIO REAL AQUI
+            const btn = document.getElementById('google-btn');
+            btn.disabled = true;
+            btn.innerHTML = "A redirecionar...";
+            
+            // Redirecionamento dinâmico baseado no ambiente
+            const redirectUrl = window.location.origin;
 
-    await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: { 
-            redirectTo: redirectUrl,
-            queryParams: { access_type: 'offline', prompt: 'consent' }
+            await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: { 
+                    redirectTo: redirectUrl
+                }
+            });
         }
-    });
-}
 
+        // Funções de Modal
         function showAuthModal() { document.getElementById('authModal').classList.replace('hidden', 'flex'); }
         function closeAuthModal() { document.getElementById('authModal').classList.replace('flex', 'hidden'); resetAuthButtons(); }
         function showUpgradeModal() { document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); }
