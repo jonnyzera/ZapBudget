@@ -1,32 +1,29 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
-from pydantic import BaseModel, EmailStr
-from supabase import create_client
 import os
 import stripe
 from datetime import datetime, timezone, timedelta
-from dotenv import load_dotenv
+from typing import Optional
 
-# Importação das rotas de PDF
-try:
-    from app.routes import budgets
-except ImportError:
-    budgets = None
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, EmailStr
+from supabase import create_client
+from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente
 load_dotenv()
 
 app = FastAPI()
 
-# --- CONFIGURAÇÃO DE CORS (CORRIGIDA) ---
+# --- CONFIGURAÇÃO DE CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://zapbudget.com.br", 
         "https://www.zapbudget.com.br",
+        "https://zapbudget.vercel.app",
         "http://localhost:3000",
-        "https://zapbudget.vercel.app", # Vírgula adicionada para evitar erro de sintaxe
         "http://127.0.0.1:3000"
     ],
     allow_credentials=True,
@@ -34,9 +31,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CONFIGURAÇÃO DE DIRETÓRIOS E CLIENTES ---
+# --- CONFIGURAÇÃO DE DIRETÓRIOS ---
+# Define o diretório raiz (ROOT_DIR) como a pasta pai de 'app'
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(CURRENT_DIR)
+PUBLIC_DIR = os.path.join(ROOT_DIR, "public")
 
 # Configuração de Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -59,11 +58,10 @@ class Orcamento(BaseModel):
     client_name: str
     servicos: str
     valor: str
-    prazo: str = None
-    pagamento: str = None
-    validade: str = None 
+    prazo: Optional[str] = None
+    pagamento: Optional[str] = None
+    validade: Optional[str] = None 
 
-# Novo modelo para o Cadastro Manual (E-mail, CPF, Senha)
 class UserSignUp(BaseModel):
     name: str
     email: EmailStr
@@ -75,13 +73,10 @@ class UserSignUp(BaseModel):
 @app.post("/api/auth/signup")
 async def signup_manual(user: UserSignUp):
     try:
-        # 1. Verificar se o CPF já existe na tabela profiles para evitar duplicidade
         check_cpf = supabase.table("profiles").select("id").eq("cpf", user.cpf).execute()
         if check_cpf.data:
             raise HTTPException(status_code=400, detail="Este CPF já está cadastrado.")
 
-        # 2. Criar usuário no Supabase Auth
-        # O Supabase já valida nativamente se o e-mail é único
         auth_res = supabase.auth.sign_up({
             "email": user.email,
             "password": user.password,
@@ -96,7 +91,6 @@ async def signup_manual(user: UserSignUp):
         if not auth_res.user:
             raise HTTPException(status_code=400, detail="Erro ao criar conta de autenticação.")
 
-        # 3. Criar o perfil na sua tabela 'profiles' para controle de trial/premium
         supabase.table("profiles").upsert({
             "id": auth_res.user.id,
             "full_name": user.name,
@@ -127,7 +121,6 @@ async def stripe_webhook(request: Request):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         user_id = session.get('client_reference_id')
-        
         if user_id:
             supabase.table("profiles").update({
                 "is_premium": True,
@@ -188,21 +181,20 @@ async def buscar_orcamento(id: str):
     except Exception:
         raise HTTPException(status_code=404, detail="Erro ao buscar orçamento")
 
-# --- ROTAS GERAIS E PDF ---
-
-if budgets:
-    app.include_router(budgets.router, prefix="/api/v1/pdf", tags=["PDF"])
+# --- ROTAS DE ARQUIVOS ---
 
 @app.get("/")
 def read_root():
-    return FileResponse(os.path.join(ROOT_DIR, "public", "index.html"))
+    # Serve a Landing Page (antiga apresentacao.html, agora index.html)
+    return FileResponse(os.path.join(PUBLIC_DIR, "index.html"))
 
-@app.get("/api/manifest.json")
+@app.get("/manifest.json")
 async def serve_manifest():
     return FileResponse(os.path.join(ROOT_DIR, "manifest.json"))
 
-@app.get("/api/service-worker.js")
+@app.get("/service-worker.js")
 async def serve_sw():
     return FileResponse(os.path.join(ROOT_DIR, "service-worker.js"))
 
-app = app
+# Monta a pasta public para servir app.html, historico.html, login.html e imagens
+app.mount("/", StaticFiles(directory=PUBLIC_DIR, html=True), name="public")
