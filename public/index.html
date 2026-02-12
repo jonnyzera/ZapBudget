@@ -7,25 +7,37 @@
     
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="./img/favicon (3).png">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="color-scheme" content="light">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
+        :root {
+            color-scheme: light;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             scroll-behavior: smooth;
             -webkit-tap-highlight-color: transparent;
-            background-color: #f8fafc;
+            background-color: #ffffff !important; /* Força fundo branco */
+            color: #0f172a !important; /* Força texto escuro */
+            overflow-x: hidden; /* Evita vazamento horizontal */
+        }
+
+        /* Previne zoom em inputs no iOS */
+        input, textarea, select {
+            font-size: 16px !important;
         }
 
         /* Estilo para simular papel no telemóvel sem quebrar o layout */
         .receipt-preview {
             background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
             background-size: 20px 20px;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .paper {
@@ -34,22 +46,19 @@
             min-height: 500px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 100%;
         }
 
         .paper::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 6px;
             background: linear-gradient(90deg, #22c55e, #16a34a);
         }
 
         .hero-gradient {
             background: radial-gradient(circle at top right, #f0fdf4, transparent), 
-                        radial-gradient(circle at bottom left, #f8fafc, transparent);
+                        radial-gradient(circle at bottom left, #ffffff, transparent);
         }
 
         .gradient-pricing {
@@ -78,19 +87,14 @@
             }
             input, textarea, button { display: none !important; }
         }
-
-        /* Melhoria de toques no mobile */
-        input, textarea, button {
-            font-size: 16px !important; /* Evita zoom automático no iOS */
-        }
         
-        button, a.btn {
-            min-height: 56px;
+        button {
+            min-height: 56px; /* Área de toque confortável */
         }
 
-        .safe-bottom {
-            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
-        }
+        /* Modal Animation */
+        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* Toast Notification */
         #toast {
@@ -101,283 +105,288 @@
             color: #fff;
             text-align: center;
             border-radius: 16px;
-            padding: 20px;
+            padding: 16px;
             position: fixed;
             z-index: 150;
             left: 50%;
             bottom: 30px;
             font-size: 14px;
             font-weight: 600;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
         }
 
         #toast.show {
             visibility: visible;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            opacity: 1;
+            bottom: 40px;
         }
-
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
-<body class="text-slate-900 overflow-x-hidden">
+<body class="text-slate-900 overflow-x-hidden antialiased">
 
-    <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 no-print">
+    <!-- Navbar -->
+    <nav class="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40 no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <div class="bg-green-600 p-1.5 rounded-lg text-white">
                     <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
                 </div>
-                <span class="font-black text-xl tracking-tight uppercase italic text-slate-900">Zap<span class="text-green-600">Budget</span></span>
+                <span class="font-black text-lg sm:text-xl tracking-tight uppercase italic text-slate-900">Zap<span class="text-green-600">Budget</span></span>
             </div>
             
-            <div class="flex items-center gap-4 sm:gap-6">
-                <a href="login.html" class="text-slate-600 font-bold text-sm hover:text-green-600 transition-colors">
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-slate-600 font-bold text-xs sm:text-sm hover:text-green-600 transition-colors px-2">
                     Entrar
                 </a>
-                <a href="#app-section" class="bg-slate-900 text-white px-5 sm:px-8 py-2.5 rounded-full text-xs sm:text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
-                    Criar Orçamento
+                <a href="#app-section" class="bg-slate-900 text-white px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
+                    Criar <span class="hidden sm:inline">Orçamento</span>
                 </a>
             </div>
         </div>
     </nav>
 
-    <header class="hero-gradient pt-16 pb-12 sm:pt-24 sm:pb-20 px-4 no-print border-b border-slate-100">
+    <!-- Hero Section -->
+    <header class="hero-gradient pt-10 pb-8 sm:pt-24 sm:pb-20 px-4 no-print border-b border-slate-100">
         <div class="max-w-5xl mx-auto text-center">
-            <span class="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-6 border border-green-200 shadow-sm">
+            <span class="inline-block bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 border border-green-100">
                 Software para Micro-Empreendedores
             </span>
-            <h1 class="text-4xl sm:text-6xl md:text-8xl font-black text-slate-900 mb-8 leading-[1.05] tracking-tighter">
+            <h1 class="text-3xl sm:text-6xl md:text-7xl font-black text-slate-900 mb-6 leading-tight tracking-tighter">
                 Orçamentos <br class="hidden sm:block"> <span class="text-green-600">Imbatíveis</span> no Zap
             </h1>
-            <p class="text-base sm:text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+            <p class="text-sm sm:text-lg md:text-xl text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
                 Profissionalize o seu negócio em segundos. Gere propostas PDF e envie direto para o WhatsApp do seu cliente com um clique.
             </p>
             
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-5">
-                <a href="#app-section" class="w-full sm:w-auto bg-green-600 text-white px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-green-200 active:scale-95">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="#app-section" class="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-xl font-extrabold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-100 active:scale-95">
                     Começar Agora
-                    <i data-lucide="zap" class="w-6 h-6 fill-white"></i>
+                    <i data-lucide="arrow-down" class="w-5 h-5 text-white"></i>
                 </a>
-                <div class="flex flex-col items-center sm:items-start gap-1">
-                    <div class="flex items-center gap-1 text-green-600">
-                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    </div>
-                    <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter italic">Líder em satisfação no Brasil</p>
-                </div>
             </div>
         </div>
     </header>
 
-    <section id="beneficios" class="py-20 bg-white no-print">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16">
-                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-4">
-                    <div class="bg-blue-50 p-4 rounded-2xl shadow-inner">
-                        <i data-lucide="timer" class="text-blue-600 w-8 h-8"></i>
-                    </div>
-                    <h3 class="text-xl font-black text-slate-800 tracking-tight">Velocidade Extrema</h3>
-                    <p class="text-slate-500 font-medium leading-relaxed">Não perca vendas por demora. Em 30 segundos o seu cliente tem a proposta na mão.</p>
+    <!-- Benefits -->
+    <section id="beneficios" class="py-12 sm:py-20 bg-white no-print">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 text-slate-400 font-bold uppercase tracking-widest text-xs">
+                    <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                    Líder em satisfação no Brasil
                 </div>
-                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-4">
-                    <div class="bg-green-50 p-4 rounded-2xl shadow-inner">
-                        <i data-lucide="award" class="text-green-600 w-8 h-8"></i>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
+                <div class="flex flex-col items-center text-center gap-3">
+                    <div class="bg-blue-50 p-3 rounded-xl">
+                        <i data-lucide="timer" class="text-blue-600 w-6 h-6"></i>
                     </div>
-                    <h3 class="text-xl font-black text-slate-800 tracking-tight">Impacto Visual</h3>
-                    <p class="text-slate-500 font-medium leading-relaxed">Design limpo e moderno que transmite autoridade. Cobre o preço justo pelo seu serviço.</p>
+                    <h3 class="text-lg font-black text-slate-800">Velocidade Extrema</h3>
+                    <p class="text-sm text-slate-500 font-medium">Não perca vendas por demora. Em 30 segundos o seu cliente tem a proposta na mão.</p>
                 </div>
-                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-4">
-                    <div class="bg-emerald-50 p-4 rounded-2xl shadow-inner">
-                        <i data-lucide="message-square" class="text-emerald-600 w-8 h-8"></i>
+                <div class="flex flex-col items-center text-center gap-3">
+                    <div class="bg-green-50 p-3 rounded-xl">
+                        <i data-lucide="award" class="text-green-600 w-6 h-6"></i>
                     </div>
-                    <h3 class="text-xl font-black text-slate-800 tracking-tight">WhatsApp Nativo</h3>
-                    <p class="text-slate-500 font-medium leading-relaxed">A integração perfeita. Nada de emails ignorados. Envie onde o cliente realmente lê.</p>
+                    <h3 class="text-lg font-black text-slate-800">Impacto Visual</h3>
+                    <p class="text-sm text-slate-500 font-medium">Design limpo e moderno que transmite autoridade. Cobre o preço justo pelo seu serviço.</p>
+                </div>
+                <div class="flex flex-col items-center text-center gap-3">
+                    <div class="bg-emerald-50 p-3 rounded-xl">
+                        <i data-lucide="message-square" class="text-emerald-600 w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800">WhatsApp Nativo</h3>
+                    <p class="text-sm text-slate-500 font-medium">A integração perfeita. Nada de emails ignorados. Envie onde o cliente realmente lê.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="pricing" class="py-24 px-6 no-print bg-slate-50">
+    <!-- Pricing -->
+    <section id="pricing" class="py-12 sm:py-24 px-4 no-print bg-slate-50">
         <div class="max-w-4xl mx-auto">
-            <div class="text-center mb-12">
+            <div class="text-center mb-10">
                 <h2 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">O Investimento do seu Sucesso</h2>
-                <p class="text-slate-500 font-semibold mt-4 text-lg">Profissionalismo por menos que um café por dia.</p>
+                <p class="text-slate-500 mt-2 text-sm sm:text-lg font-semibold">Profissionalismo por menos que um café por dia.</p>
             </div>
-            
-            <div class="gradient-pricing rounded-[48px] p-8 sm:p-12 text-white shadow-2xl shadow-green-200 relative overflow-hidden">
-                <div class="absolute -right-20 -top-20 w-64 h-64 bg-white/10 rounded-full blur-[80px]"></div>
-                <div class="absolute -left-20 -bottom-20 w-48 h-48 bg-black/10 rounded-full blur-[60px]"></div>
-                
-                <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-3">
-                            <span class="bg-white/20 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-white/10">Plano Profissional</span>
-                            <div class="bg-yellow-400 text-slate-900 text-[9px] font-bold px-3 py-1 rounded-full uppercase">Melhor Escolha</div>
+
+            <div class="gradient-pricing rounded-[32px] sm:rounded-[48px] p-6 sm:p-12 text-white shadow-2xl shadow-green-200 relative overflow-hidden">
+                <div class="relative z-10 flex flex-col md:flex-row gap-8 md:gap-12 items-center">
+                    <div class="space-y-4 text-center md:text-left flex-1">
+                        <div class="flex items-center justify-center md:justify-start gap-2">
+                            <span class="bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/10">Plano Profissional</span>
+                            <span class="bg-yellow-400 text-slate-900 text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider">Melhor Escolha</span>
                         </div>
                         
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-2xl font-bold opacity-60">R$</span>
-                            <span class="text-7xl font-black tracking-tighter">19,90</span>
-                            <span class="text-xl font-bold opacity-60">/mês</span>
+                        <div class="flex items-baseline justify-center md:justify-start gap-1">
+                            <span class="text-xl font-bold opacity-80">R$</span>
+                            <span class="text-5xl sm:text-6xl font-black tracking-tighter">19,90</span>
+                            <span class="text-base font-bold opacity-80">/mês</span>
                         </div>
                         
-                        <p class="text-green-100 font-medium leading-relaxed">
+                        <p class="text-green-50 text-sm font-medium leading-relaxed">
                             Acesso total a todas as ferramentas de conversão para fechar mais negócios hoje mesmo.
                         </p>
                     </div>
                     
-                    <div class="bg-white/10 backdrop-blur-sm p-8 rounded-3xl border border-white/10">
-                        <ul class="space-y-4 text-sm font-semibold mb-8">
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Orçamentos Ilimitados</li>
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Logo da sua Empresa</li>
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Gestão de Clientes (CRM)</li>
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i> Suporte Prioritário</li>
+                    <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 w-full md:w-auto min-w-[280px]">
+                        <ul class="space-y-3 text-xs sm:text-sm font-semibold mb-6">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-300"></i> Orçamentos Ilimitados</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-300"></i> Logo da sua Empresa</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-300"></i> Gestão de Clientes (CRM)</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-300"></i> Suporte Prioritário</li>
                         </ul>
-                        <a href="login.html" class="block w-full bg-white text-green-700 text-center font-black py-5 rounded-2xl text-lg hover:bg-green-50 transition-all shadow-xl active:scale-95">
+                        <a href="login.html" class="block w-full bg-white text-green-700 text-center font-black py-4 rounded-xl text-sm sm:text-base hover:bg-green-50 transition-all shadow-lg active:scale-95">
                             ASSINAR AGORA
                         </a>
+                        <p class="text-center text-[9px] mt-3 font-bold opacity-60 uppercase tracking-wider">Cancele a qualquer momento · Sem fidelidade</p>
                     </div>
                 </div>
             </div>
-            <p class="text-center text-xs font-bold text-slate-400 mt-8 uppercase tracking-[0.2em]">Cancele a qualquer momento · Sem fidelidade</p>
         </div>
     </section>
 
-    <section id="app-section" class="py-20 px-4 border-t border-slate-200 bg-white">
+    <!-- App Section -->
+    <section id="app-section" class="py-12 sm:py-20 px-4 border-t border-slate-200 bg-white">
         <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-12 no-print">
-                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Gerador de Propostas</h2>
-                <p class="text-slate-500 mt-2 font-semibold text-lg">Os dados digitados são atualizados no preview ao lado.</p>
+            <div class="text-center mb-8 sm:mb-12 no-print">
+                <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">Gerador de Propostas</h2>
+                <p class="text-slate-500 mt-2 text-sm sm:text-base font-medium">Os dados digitados são atualizados no preview ao lado.</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                 
-                <div class="lg:col-span-5 space-y-8 no-print order-2 lg:order-1">
-                    <div class="bg-white rounded-[40px] p-8 shadow-2xl shadow-slate-200 border border-slate-100 space-y-8">
-                        <div class="space-y-6">
-                            <div class="flex items-center gap-3 text-green-600 font-black text-xs uppercase tracking-widest border-b border-slate-100 pb-3">
-                                <i data-lucide="user" class="w-4 h-4"></i> Identificação do Negócio
+                <!-- Inputs (Left) -->
+                <div class="lg:col-span-5 space-y-6 no-print order-1">
+                    <div class="bg-white rounded-[24px] sm:rounded-[32px] p-6 shadow-xl shadow-slate-100 border border-slate-100 space-y-6">
+                        
+                        <!-- Identificação -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-2 text-green-600 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 pb-2">
+                                <i data-lucide="user" class="w-3 h-3"></i> Identificação do Negócio
                             </div>
-                            <div class="grid grid-cols-1 gap-6">
+                            <div class="grid grid-cols-1 gap-4">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Sua Empresa / Nome Profissional</label>
-                                    <input type="text" id="vendorName" placeholder="Ex: João Reparos" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">Sua Empresa / Nome Profissional</label>
+                                    <input type="text" id="vendorName" placeholder="Ex: João Reparos" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-bold transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Nome Completo do Cliente</label>
-                                    <input type="text" id="clientName" placeholder="Quem recebe a proposta?" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-6">
-                            <div class="flex items-center gap-3 text-green-600 font-black text-xs uppercase tracking-widest border-b border-slate-100 pb-3">
-                                <i data-lucide="briefcase" class="w-4 h-4"></i> Detalhes dos Serviços
-                            </div>
-                            <textarea id="serviceDescription" rows="5" placeholder="Liste aqui o que será realizado..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-medium transition-all focus:ring-4 focus:ring-green-50"></textarea>
-                            <div class="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Prazo Estipulado</label>
-                                    <input type="text" id="deliveryTime" placeholder="Ex: 5 dias" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Método de Pagamento</label>
-                                    <input type="text" id="paymentMethod" placeholder="Ex: Pix 50/50" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold transition-all focus:ring-4 focus:ring-green-50">
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">Nome Completo do Cliente</label>
+                                    <input type="text" id="clientName" placeholder="Nome do Cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-bold transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 </div>
                             </div>
                         </div>
 
-                        <div class="space-y-6">
-                            <div class="flex items-center gap-3 text-green-600 font-black text-xs uppercase tracking-widest border-b border-slate-100 pb-3">
-                                <i data-lucide="dollar-sign" class="w-4 h-4"></i> Valor e Expiração
+                        <!-- Serviços -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-2 text-green-600 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 pb-2">
+                                <i data-lucide="briefcase" class="w-3 h-3"></i> Detalhes dos Serviços
                             </div>
-                            <div class="grid grid-cols-2 gap-6">
+                            <textarea id="serviceDescription" rows="4" placeholder="Descrição do serviço..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+                            <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Investimento (R$)</label>
-                                    <input type="text" id="totalValue" placeholder="R$ 0,00" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-lg font-black text-green-700 transition-all focus:ring-4 focus:ring-green-50">
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">Prazo Estipulado</label>
+                                    <input type="text" id="deliveryTime" placeholder="Ex: 5 dias" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-bold transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Validade</label>
-                                    <input type="date" id="expiryDate" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold transition-all focus:ring-4 focus:ring-green-50">
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">Método de Pagamento</label>
+                                    <input type="text" id="paymentMethod" placeholder="Ex: Pix" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-bold transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Valor -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-2 text-green-600 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 pb-2">
+                                <i data-lucide="dollar-sign" class="w-3 h-3"></i> Valor e Expiração
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">Investimento (R$)</label>
+                                    <input type="text" id="totalValue" placeholder="R$ 0,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-lg font-black text-green-700 transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">Validade</label>
+                                    <input type="date" id="expiryDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs font-bold transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-4">
-                        <button onclick="shareWhatsApp()" class="w-full bg-[#25D366] text-white font-black py-6 rounded-3xl transition-all shadow-2xl shadow-green-100 active:scale-95 flex items-center justify-center gap-4 text-xl">
-                            <i data-lucide="message-circle" class="w-7 h-7"></i> Enviar via WhatsApp
+                    <!-- Botões de Ação -->
+                    <div class="flex flex-col gap-3">
+                        <button onclick="handleActionWithDelay('whatsapp')" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-green-100 active:scale-95 flex items-center justify-center gap-3 text-lg">
+                            <i data-lucide="message-circle" class="w-6 h-6"></i> Enviar via WhatsApp
                         </button>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-5 rounded-3xl transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-slate-200">
-                                <i data-lucide="printer" class="w-6 h-6 text-green-400"></i> Gerar PDF
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="handleActionWithDelay('pdf')" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm sm:text-base">
+                                <i data-lucide="printer" class="w-5 h-5 text-green-400"></i> Gerar PDF
                             </button>
-                            <button onclick="showModalReset()" class="bg-white border border-slate-200 text-slate-400 font-bold py-5 rounded-3xl transition-all flex items-center justify-center gap-3 active:scale-95 hover:text-red-500 hover:border-red-100">
+                            <button onclick="showModalReset()" class="bg-white border border-slate-200 text-slate-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 hover:text-red-500 hover:border-red-200 text-sm sm:text-base">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i> Limpar
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="lg:col-span-7 order-1 lg:order-2">
-                    <div class="lg:sticky lg:top-28">
-                        <div class="mb-6 flex items-center justify-between no-print px-4">
+                <!-- Preview (Right) -->
+                <div class="lg:col-span-7 order-2">
+                    <div class="lg:sticky lg:top-24">
+                        <div class="mb-4 flex items-center justify-between no-print px-2">
                             <span class="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
                                 <i data-lucide="eye" class="w-4 h-4"></i> Pré-Visualização Real
                             </span>
                         </div>
 
-                        <div id="previewArea" class="receipt-preview rounded-[48px] p-2 sm:p-12 lg:p-16 border border-slate-100 transition-all shadow-inner">
-                            <div id="captureArea" class="paper rounded-lg p-8 sm:p-16 flex flex-col justify-between overflow-hidden">
+                        <div id="previewArea" class="receipt-preview rounded-[24px] sm:rounded-[32px] p-2 sm:p-8 lg:p-12 border border-slate-100 transition-all shadow-inner bg-slate-50">
+                            <div id="captureArea" class="paper rounded-sm p-6 sm:p-12 flex flex-col justify-between overflow-hidden">
                                 <div>
-                                    <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-16">
-                                        <div class="space-y-2">
-                                            <h2 id="previewVendor" class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase break-words leading-none">SUA EMPRESA</h2>
+                                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6 mb-8 sm:mb-12">
+                                        <div class="space-y-1">
+                                            <h2 id="previewVendor" class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter uppercase break-words leading-none">SUA EMPRESA</h2>
                                             <p class="text-green-600 text-[10px] font-black uppercase tracking-[0.3em]">Proposta de Orçamento</p>
                                         </div>
-                                        <p id="currentDate" class="text-sm font-bold text-slate-400 border-b-2 border-slate-100 pb-1">00/00/0000</p>
+                                        <p id="currentDate" class="text-xs font-bold text-slate-400">11/02/2026</p>
                                     </div>
 
-                                    <div class="mb-12 border-l-8 border-green-500 bg-slate-50 p-8 rounded-r-2xl">
-                                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Destinatário:</p>
-                                        <h3 id="previewClient" class="text-xl sm:text-2xl font-black text-slate-900 break-words tracking-tight">Nome do Cliente</h3>
+                                    <div class="mb-8 border-l-4 border-green-500 bg-slate-50 p-4 rounded-r-xl">
+                                        <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Destinatário:</p>
+                                        <h3 id="previewClient" class="text-lg sm:text-xl font-bold text-slate-900 break-words tracking-tight">Nome do Cliente</h3>
                                     </div>
 
-                                    <div class="space-y-8">
-                                        <div class="border-b-2 border-slate-100 pb-2">
-                                            <h4 class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Descrição do Projeto</h4>
+                                    <div class="space-y-6">
+                                        <div class="border-b border-slate-100 pb-1">
+                                            <h4 class="text-[9px] text-slate-400 font-black uppercase tracking-widest">Descrição do Projeto</h4>
                                         </div>
-                                        <div id="previewService" class="text-slate-700 text-base whitespace-pre-wrap min-h-[150px] leading-relaxed font-medium">Os detalhes aparecerão aqui enquanto digita...</div>
+                                        <div id="previewService" class="text-slate-700 text-sm sm:text-base whitespace-pre-wrap min-h-[100px] leading-relaxed font-medium">Os detalhes aparecerão aqui enquanto digita...</div>
                                         
-                                        <div class="grid grid-cols-2 gap-8 pt-8 border-t border-slate-100">
+                                        <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100">
                                             <div>
-                                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Prazo Estimado</p>
-                                                <p id="previewDelivery" class="text-sm font-bold text-slate-800">-</p>
+                                                <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Prazo Estimado</p>
+                                                <p id="previewDelivery" class="text-xs sm:text-sm font-bold text-slate-800">-</p>
                                             </div>
                                             <div>
-                                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Pagamento</p>
-                                                <p id="previewPayment" class="text-sm font-bold text-slate-800">-</p>
+                                                <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Pagamento</p>
+                                                <p id="previewPayment" class="text-xs sm:text-sm font-bold text-slate-800">-</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="mt-16">
-                                    <div class="pt-10 border-t-8 border-slate-900 flex flex-col sm:flex-row justify-between items-end gap-6">
-                                        <p id="previewExpiry" class="text-[10px] text-slate-400 font-black uppercase tracking-widest italic"></p>
+                                <div class="mt-8 sm:mt-12">
+                                    <div class="pt-6 border-t-4 border-slate-900 flex flex-col sm:flex-row justify-between items-end gap-4">
+                                        <p id="previewExpiry" class="text-[9px] text-slate-400 font-black uppercase tracking-widest italic"></p>
                                         <div class="text-right w-full sm:w-auto">
-                                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Investimento Total</p>
-                                            <p id="previewPrice" class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
+                                            <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Investimento Total</p>
+                                            <p id="previewPrice" class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">R$ 0,00</p>
                                         </div>
                                     </div>
-                                    <div class="mt-12 pt-10 border-t border-slate-100 text-center">
-                                        <p id="previewVendorSignature" class="text-lg font-black text-slate-900 uppercase italic mb-2 tracking-tight"></p>
-                                        <div class="w-16 h-1.5 bg-green-500 mx-auto rounded-full mb-4"></div>
-                                        <p class="text-[9px] text-slate-300 font-black uppercase tracking-[0.5em]">Emitido via ZapBudget Pro</p>
+                                    <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                                        <p id="previewVendorSignature" class="text-[10px] font-black text-slate-900 uppercase italic tracking-tight mb-2">SUA EMPRESA</p>
+                                        <div class="w-8 h-1 bg-green-500 mx-auto rounded-full mb-2"></div>
+                                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Emitido via ZapBudget Pro</p>
                                     </div>
                                 </div>
                             </div>
@@ -388,50 +397,84 @@
         </div>
     </section>
 
-    <footer class="bg-slate-950 text-slate-500 pt-20 pb-16 no-print safe-bottom border-t border-white/5">
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-500 py-12 no-print safe-bottom mt-12 border-t border-white/5">
         <div class="max-w-7xl mx-auto px-6 text-center">
-            <div class="flex items-center justify-center gap-3 mb-8">
-                <div class="bg-green-600 p-2 rounded-xl text-white shadow-lg shadow-green-900/20">
-                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
-                </div>
-                <span class="font-black text-white text-2xl tracking-tighter uppercase italic">Zap<span class="text-green-600">Budget</span></span>
+            <div class="flex items-center justify-center gap-2 mb-6">
+                <i data-lucide="zap" class="w-5 h-5 text-green-500 fill-current"></i>
+                <span class="font-black text-white text-xl uppercase italic">Zap<span class="text-green-600">Budget</span></span>
             </div>
-            <p class="text-sm font-bold opacity-40 mb-12 max-w-md mx-auto leading-relaxed">A ferramenta líder para profissionais que levam a sério a sua imagem e as suas vendas.</p>
             
-            <div class="flex justify-center gap-8 mb-12 opacity-30">
+            <p class="text-sm font-bold opacity-40 mb-8 max-w-md mx-auto leading-relaxed">
+                A ferramenta líder para profissionais que levam a sério a sua imagem e as suas vendas.
+            </p>
+            
+            <div class="flex justify-center gap-8 mb-8 opacity-30">
                 <i data-lucide="shield-check" class="w-6 h-6"></i>
                 <i data-lucide="lock" class="w-6 h-6"></i>
                 <i data-lucide="award" class="w-6 h-6"></i>
             </div>
-
-            <div class="pt-12 border-t border-white/5">
-                <p class="text-[10px] font-black tracking-[0.4em] uppercase opacity-20">© 2026 ZapBudget SaaS · Guarulhos, São Paulo</p>
-            </div>
+            
+            <p class="text-xs font-bold opacity-40 uppercase tracking-widest">© 2026 ZapBudget SaaS · Guarulhos, São Paulo</p>
         </div>
     </footer>
 
-    <div id="modalReset" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] hidden items-center justify-center p-6">
-        <div class="bg-white rounded-[40px] p-10 max-w-sm w-full shadow-2xl space-y-8 transform transition-all border border-slate-100">
-            <div class="bg-red-50 w-20 h-20 rounded-3xl flex items-center justify-center text-red-500 mx-auto shadow-inner">
-                <i data-lucide="trash-2" class="w-10 h-10"></i>
+    <!-- MODAL DE RESET -->
+    <div id="modalReset" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-xs w-full shadow-2xl space-y-6 text-center modal-enter">
+            <div class="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mx-auto">
+                <i data-lucide="trash-2" class="w-8 h-8"></i>
             </div>
-            <div class="text-center space-y-3">
-                <h3 class="text-2xl font-black text-slate-900 tracking-tight">Limpar Orçamento?</h3>
-                <p class="text-slate-500 font-bold leading-relaxed">Todos os dados digitados serão perdidos permanentemente.</p>
+            <div>
+                <h3 class="text-lg font-black text-slate-900">Limpar tudo?</h3>
+                <p class="text-slate-500 text-sm mt-1">Essa ação não pode ser desfeita.</p>
             </div>
             <div class="flex flex-col gap-3">
-                <button onclick="resetAll()" class="w-full bg-red-500 text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-red-100 active:scale-95">SIM, LIMPAR TUDO</button>
-                <button onclick="hideModalReset()" class="w-full bg-slate-100 text-slate-600 font-bold py-5 rounded-2xl transition-all active:scale-95">CANCELAR</button>
+                <button onclick="resetAll()" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl transition-all active:scale-95">Sim, limpar</button>
+                <button onclick="hideModalReset()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl transition-all active:scale-95">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <div id="toast">Concluído com sucesso!</div>
+    <!-- MODAL DE CONVERSÃO (10 SEGUNDOS) -->
+    <div id="conversionModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[60] hidden items-center justify-center p-6">
+        <div class="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center modal-enter border-t-8 border-green-500 relative">
+            
+            <div class="absolute -top-12 left-0 right-0 flex justify-center">
+                <div class="bg-white p-2 rounded-full shadow-lg">
+                    <div class="bg-green-100 p-3 rounded-full animate-pulse">
+                        <i data-lucide="hourglass" class="w-8 h-8 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h3 class="text-xl font-black text-slate-900 uppercase tracking-tight">Aguarde um instante...</h3>
+                <p class="text-slate-500 font-medium mt-3 leading-relaxed">
+                    Estamos preparando o seu arquivo.<br>
+                    <span class="text-green-600 font-bold">Salve seus orçamentos e envie via WhatsApp com sua marca!</span>
+                </p>
+            </div>
+
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div id="progressBar" class="bg-green-500 h-2 rounded-full w-0 transition-all duration-[10000ms] ease-linear"></div>
+            </div>
+
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Finalizando em 10 segundos</p>
+        </div>
+    </div>
+
+    <div id="toast"></div>
 
     <script>
         lucide.createIcons();
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
-        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
+        
+        // Define data fixa inicial conforme solicitado, mas atualiza se necessário
+        document.getElementById('currentDate').innerText = "11/02/2026";
+
+        // Variável de controle para o bloqueio de 10s
+        let isConversionUnlocked = false;
 
         function showToast(message) {
             const toast = document.getElementById('toast');
@@ -440,7 +483,39 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // Máscara de Moeda (Melhorada)
+        // Lógica do Modal de Espera
+        function handleActionWithDelay(type) {
+            // Se já foi desbloqueado, executa direto
+            if (isConversionUnlocked) {
+                if (type === 'whatsapp') shareWhatsApp();
+                if (type === 'pdf') window.print();
+                return;
+            }
+
+            // Se não, mostra o modal e inicia o contador
+            const modal = document.getElementById('conversionModal');
+            const progressBar = document.getElementById('progressBar');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Inicia animação da barra de progresso
+            setTimeout(() => {
+                progressBar.style.width = '100%';
+            }, 100);
+
+            // Aguarda 10 segundos
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                isConversionUnlocked = true; // Libera para as próximas vezes
+                
+                showToast("🎉 Pronto! Agora você pode finalizar.");
+                
+            }, 10000);
+        }
+
+        // Máscara de Moeda
         document.getElementById('totalValue').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, "");
             value = (value / 100).toFixed(2) + "";
@@ -473,7 +548,6 @@
             }
         }
 
-        // Event listeners para todos os campos
         inputs.forEach(id => {
             const el = document.getElementById(id);
             if(el && id !== 'totalValue') {
@@ -490,7 +564,7 @@
             const pay = document.getElementById('paymentMethod').value;
             const exp = document.getElementById('expiryDate').value;
 
-            if (!c || !p) return showToast("⚠️ Por favor, informe o cliente e o valor!");
+            if (!c || !p) return showToast("⚠️ Informe o cliente e o valor!");
 
             let expStr = "";
             if (exp) {
@@ -498,7 +572,7 @@
                 expStr = `\n⏳ *Validade:* ${dia}/${mes}/${ano}`;
             }
 
-            const msg = `📄 *PROPOSTA COMERCIAL*\n---------------------------------\n🏢 *De:* ${v}\n👤 *Cliente:* ${c}\n\n📝 *Serviço:* \n${s || 'Ver detalhes em anexo'}\n\n🚚 *Prazo:* ${d || 'A combinar'}\n💳 *Pagamento:* ${pay || 'A combinar'}\n\n💰 *Total:* ${p}${expStr}\n---------------------------------\n✅ *Fico a aguardar o seu retorno!*`;
+            const msg = `📄 *ORÇAMENTO*\n----------------------\n🏢 *De:* ${v}\n👤 *Para:* ${c}\n\n📝 *Serviço:* \n${s || 'Ver detalhes'}\n\n🚚 *Prazo:* ${d || 'A combinar'}\n💰 *Valor:* ${p}${expStr}\n----------------------\n✅ *Fico no aguardo!*`;
             
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
@@ -520,19 +594,16 @@
             });
             updatePreview();
             hideModalReset();
-            showToast("✨ Orçamento limpo!");
+            showToast("✨ Limpo com sucesso!");
         }
 
-        // Registro do Service Worker para PWA
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registrado!', reg))
-                    .catch(err => console.log('Erro ao registrar Service Worker:', err));
+                navigator.serviceWorker.register('/service-worker.js').catch(() => {});
             });
         }
 
-        // Inicialização
         updatePreview();
     </script>
 </body>
