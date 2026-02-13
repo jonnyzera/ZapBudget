@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-pt" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -19,18 +19,48 @@
             color-scheme: light;
         }
 
+        html {
+            scroll-behavior: smooth;
+            background-color: #ffffff !important;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            scroll-behavior: smooth;
             -webkit-tap-highlight-color: transparent;
             background-color: #ffffff !important; /* Força fundo branco */
             color: #0f172a !important; /* Força texto escuro */
             overflow-x: hidden; /* Evita vazamento horizontal */
+            
+            /* Bloqueia inversão de cores em navegadores mobile */
+            forced-color-adjust: none;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Previne zoom em inputs no iOS */
+        /* Força estilos claros mesmo se o sistema estiver em Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body, html {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+            }
+            .bg-white { background-color: #ffffff !important; }
+            .bg-slate-50 { background-color: #f8fafc !important; }
+            .text-slate-900 { color: #0f172a !important; }
+            .text-slate-500 { color: #64748b !important; }
+        }
+
+        /* Previne zoom em inputs no iOS e força cores claras */
         input, textarea, select {
             font-size: 16px !important;
+            background-color: #f8fafc !important; /* Garante fundo claro nos inputs */
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            border-color: #e2e8f0;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+            -webkit-text-fill-color: #94a3b8 !important;
+            opacity: 1;
         }
 
         /* Estilo para simular papel no telemóvel sem quebrar o layout */
@@ -140,7 +170,8 @@
                 <a href="login.html" class="text-slate-600 font-bold text-xs sm:text-sm hover:text-green-600 transition-colors px-2">
                     Entrar
                 </a>
-                <a href="#app-section" class="bg-slate-900 text-white px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
+                <!-- Botão Suave Navbar -->
+                <a href="#app-section" class="bg-slate-900 text-white px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold hover:bg-slate-800 transition-all duration-300 ease-in-out active:scale-95 shadow-lg shadow-slate-200 hover:shadow-xl">
                     Criar <span class="hidden sm:inline">Orçamento</span>
                 </a>
             </div>
@@ -161,7 +192,8 @@
             </p>
             
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="#app-section" class="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-xl font-extrabold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-100 active:scale-95">
+                <!-- Botão Suave Hero (Gradiente) -->
+                <a href="#app-section" class="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-extrabold text-lg transition-all duration-300 ease-out flex items-center justify-center gap-2 shadow-xl shadow-green-200 active:scale-95 border border-transparent">
                     Começar Agora
                     <i data-lucide="arrow-down" class="w-5 h-5 text-white"></i>
                 </a>
