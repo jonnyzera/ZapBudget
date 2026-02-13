@@ -5,25 +5,34 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from supabase import create_client
 from dotenv import load_dotenv
 
-# Tenta importar as rotas de PDF. 
-# O try/except evita que a API quebre inteira se houver erro no fpdf2
-try:
-    from app.routes import budgets
-except ImportError as e:
-    print(f"AVISO: Não foi possível carregar o módulo de PDF: {e}")
-    budgets = None
+# --- CONFIGURAÇÃO INICIAL E AMBIENTE ---
 
-# Carrega variáveis de ambiente
+# Carrega variáveis de ambiente (.env)
 load_dotenv()
 
+# Inicializa a aplicação FastAPI
 app = FastAPI()
 
+# --- IMPORTAÇÃO DE ROTAS (PDF) ---
+# Tenta importar as rotas de PDF. 
+# O try/except evita que a API quebre inteira se houver erro no fpdf2 ou caminho
+try:
+    from app.routes import budgets
+except ImportError:
+    # Fallback para tentar importação relativa se rodar diretamente da pasta app
+    try:
+        from routes import budgets
+    except ImportError as e:
+        print(f"AVISO: Não foi possível carregar o módulo de PDF: {e}")
+        budgets = None
+
 # --- CONFIGURAÇÃO DE CORS ---
-# Permite que o frontend (gerido pelo Vercel) fale com o backend
+# Permite que o frontend (gerido pelo Vercel ou local) fale com o backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -212,7 +221,15 @@ async def buscar_orcamento(id: str):
     except Exception:
         raise HTTPException(status_code=404, detail="Erro ao buscar orçamento")
 
-# Rota de health check para a Vercel não reclamar
+# Rota de health check
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "pdf_module": budgets is not None}
+
+# --- ARQUIVOS ESTÁTICOS (PARA RODAR LOCALMENTE) ---
+# Isso permite que 'uvicorn app.main:app --reload' sirva o frontend em '/'
+# Importante: Colocamos isso APÓS as rotas da API para não bloquear o /api
+public_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public")
+
+if os.path.exists(public_path):
+    app.mount("/", StaticFiles(directory=public_path, html=True), name="public")

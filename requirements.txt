@@ -7,3 +7,4 @@ python-dotenv
 fpdf2
 stripe
 email-validator
+aiofiles
