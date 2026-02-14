@@ -85,7 +85,7 @@
 
         <div class="bg-white p-6 sm:p-10 rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50">
             
-            <button onclick="handleGoogleLogin()" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-8 active:scale-95 transition-all">
+            <button onclick="handleGoogleLogin()" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-6 active:scale-95 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -95,21 +95,47 @@
                 Continuar com Google
             </button>
 
-            <div class="relative flex items-center gap-4 mb-8">
+            <div class="relative flex items-center gap-4 mb-6">
                 <div class="flex-1 h-px bg-slate-100"></div>
-                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">ou e-mail</span>
+                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">ou manual</span>
                 <div class="flex-1 h-px bg-slate-100"></div>
             </div>
 
+            <!-- Abas Login / Cadastro -->
+            <div class="flex bg-slate-50 p-1.5 rounded-2xl mb-6">
+                <button onclick="toggleAuthMode('login')" id="btn-tab-login" class="flex-1 py-3 text-xs font-bold rounded-xl bg-white shadow-sm transition-all text-slate-900">Entrar</button>
+                <button onclick="toggleAuthMode('signup')" id="btn-tab-signup" class="flex-1 py-3 text-xs font-bold text-slate-400 transition-all hover:text-slate-600">Cadastrar</button>
+            </div>
+
             <form onsubmit="handleAuth(event)" class="space-y-5">
+                <!-- Campos de Cadastro (Ocultos inicialmente) -->
+                <div id="signup-fields" class="hidden space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
+                        <input type="text" id="auth-name" placeholder="Ex: João Silva" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-sm focus:bg-white transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">CPF (Apenas números)</label>
+                        <input type="text" id="auth-cpf" maxlength="11" placeholder="00000000000" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-sm focus:bg-white transition-colors">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Seu E-mail</label>
                     <input type="email" id="auth-email" required placeholder="exemplo@gmail.com" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 transition-all text-sm sm:text-base">
                 </div>
 
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Sua Senha</label>
-                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 transition-all text-sm sm:text-base">
+                <div class="grid grid-cols-1 gap-5">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Sua Senha</label>
+                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 transition-all text-sm sm:text-base">
+                    </div>
+                    
+                    <!-- Confirmação de Senha (Oculto inicialmente) -->
+                    <div id="confirm-pass-field" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirmar Senha</label>
+                        <input type="password" id="auth-confirm-password" placeholder="••••••••" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 transition-all text-sm sm:text-base">
+                    </div>
                 </div>
 
                 <button type="submit" id="auth-btn" class="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-2 mt-4">
@@ -130,7 +156,43 @@
         const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let authMode = 'login';
         lucide.createIcons();
+
+        function toggleAuthMode(mode) {
+            authMode = mode;
+            const signupFields = document.getElementById('signup-fields');
+            const confirmPass = document.getElementById('confirm-pass-field');
+            const btnText = document.getElementById('auth-btn');
+            const title = document.getElementById('auth-title');
+            
+            const tabLogin = document.getElementById('btn-tab-login');
+            const tabSignup = document.getElementById('btn-tab-signup');
+
+            if (mode === 'signup') {
+                signupFields.classList.remove('hidden');
+                confirmPass.classList.remove('hidden');
+                btnText.innerText = "CRIAR CONTA GRÁTIS";
+                title.innerText = "Criar Nova Conta";
+                
+                tabSignup.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
+                tabSignup.classList.remove('text-slate-400');
+                
+                tabLogin.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
+                tabLogin.classList.add('text-slate-400');
+            } else {
+                signupFields.classList.add('hidden');
+                confirmPass.classList.add('hidden');
+                btnText.innerText = "ENTRAR NO SISTEMA";
+                title.innerText = "Acesse sua Conta";
+                
+                tabLogin.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
+                tabLogin.classList.remove('text-slate-400');
+                
+                tabSignup.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
+                tabSignup.classList.add('text-slate-400');
+            }
+        }
 
         async function handleAuth(e) {
             e.preventDefault();
@@ -139,48 +201,61 @@
             const password = document.getElementById('auth-password').value;
             
             btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AUTENTICANDO...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> PROCESSANDO...`;
             lucide.createIcons();
 
             try {
-                // Tenta login primeiro
-                let { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
+                if (authMode === 'signup') {
+                    const name = document.getElementById('auth-name').value;
+                    const cpf = document.getElementById('auth-cpf').value;
+                    const confirmPass = document.getElementById('auth-confirm-password').value;
 
-                // Se der erro (usuário não existe), tenta cadastrar
-                if (error) {
-                    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+                    if (!name || !cpf) throw new Error("Preencha nome e CPF.");
+                    if (password !== confirmPass) throw new Error("As senhas não coincidem.");
+
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email: email,
+                        password: password,
+                        options: { data: { full_name: name, cpf: cpf } }
+                    });
+                    if (error) throw error;
+                    
+                    alert("Conta criada! Verifique seu e-mail.");
+                    // Pode redirecionar ou aguardar verificação
+                } else {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
                         email: email,
                         password: password,
                     });
-                    if (signUpError) throw signUpError;
-                    data = signUpData;
+                    if (error) throw error;
+
+                    if (data.user) {
+                        // Garante que o perfil exista
+                        const provider = data.user.app_metadata.provider || 'email';
+                        await supabaseClient.from('profiles').upsert({
+                            id: data.user.id,
+                            provider: provider,
+                            trial_start: new Date().toISOString()
+                        }, { onConflict: 'id' });
+                        
+                        btn.classList.replace('bg-green-600', 'bg-slate-900');
+                        btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
+                        
+                        // Redireciona para o APP (gerador) após login
+                        setTimeout(() => { window.location.href = "app.html"; }, 800);
+                    }
                 }
-
-                if (data.user) {
-                    const provider = data.user.app_metadata.provider || 'email';
-                    // Upsert do perfil
-                    await supabaseClient.from('profiles').upsert({
-                        id: data.user.id,
-                        provider: provider,
-                        trial_start: new Date().toISOString()
-                    }, { onConflict: 'id' });
-                }
-
-                btn.classList.replace('bg-green-600', 'bg-slate-900');
-                btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
-                
-                // Redireciona para o APP (gerador) após login
-                setTimeout(() => { window.location.href = "app.html"; }, 800);
-
             } catch (err) {
                 console.error("Erro:", err.message);
-                alert("Erro ao acessar: " + err.message);
+                alert("Erro: " + err.message);
                 btn.disabled = false;
-                btn.innerHTML = `ENTRAR NO SISTEMA`;
-                lucide.createIcons();
+                btn.innerHTML = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO SISTEMA";
+            } finally {
+                if(btn.disabled && btn.innerHTML.includes("SUCESSO")) {
+                    // Não faz nada, está redirecionando
+                } else {
+                    btn.disabled = false;
+                }
             }
         }
 
@@ -189,7 +264,7 @@
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/app.html' // Redireciona para o APP
+                        redirectTo: window.location.origin + '/app.html'
                     }
                 });
                 if (error) throw error;

@@ -306,6 +306,17 @@
             setTimeout(() => { window.location.href = checkoutUrl; }, 800);
         }
 
+        tailwind.config = {
+        darkMode: 'class', // Isso desativa a detecção automática do sistema
+        theme: {
+            extend: {
+                colors: {
+                    // Seus ajustes de cores, se houver
+                }
+            }
+        }
+    }
+
         init();
     </script>
 </body>
