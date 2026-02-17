@@ -12,6 +12,11 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Adicionado FontAwesome para o ícone do WhatsApp -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SDK Supabase Adicionado -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -27,16 +32,13 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            background-color: #ffffff !important; /* Força fundo branco */
-            color: #0f172a !important; /* Força texto escuro */
-            overflow-x: hidden; /* Evita vazamento horizontal */
-            
-            /* Bloqueia inversão de cores em navegadores mobile */
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            overflow-x: hidden;
             forced-color-adjust: none;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Força estilos claros mesmo se o sistema estiver em Dark Mode */
         @media (prefers-color-scheme: dark) {
             body, html {
                 background-color: #ffffff !important;
@@ -48,10 +50,9 @@
             .text-slate-500 { color: #64748b !important; }
         }
 
-        /* Previne zoom em inputs no iOS e força cores claras */
         input, textarea, select {
             font-size: 16px !important;
-            background-color: #f8fafc !important; /* Garante fundo claro nos inputs */
+            background-color: #f8fafc !important;
             color: #0f172a !important;
             -webkit-text-fill-color: #0f172a !important;
             border-color: #e2e8f0;
@@ -63,7 +64,6 @@
             opacity: 1;
         }
 
-        /* Estilo para simular papel no telemóvel sem quebrar o layout */
         .receipt-preview {
             background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
             background-size: 20px 20px;
@@ -95,7 +95,6 @@
             background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
         }
 
-        /* Estilos de Impressão Refinados */
         @media print {
             .no-print, nav, footer, header, #pricing, #beneficios, .text-center.mb-12 { display: none !important; }
             body { background: white; margin: 0; padding: 0; }
@@ -119,14 +118,12 @@
         }
         
         button {
-            min-height: 56px; /* Área de toque confortável */
+            min-height: 56px;
         }
 
-        /* Modal Animation */
         .modal-enter { animation: modalFadeIn 0.3s ease-out; }
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* Toast Notification */
         #toast {
             visibility: hidden;
             min-width: 280px;
@@ -170,7 +167,6 @@
                 <a href="login.html" class="text-slate-600 font-bold text-xs sm:text-sm hover:text-green-600 transition-colors px-2">
                     Entrar
                 </a>
-                <!-- Botão Suave Navbar -->
                 <a href="#app-section" class="bg-slate-900 text-white px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold hover:bg-slate-800 transition-all duration-300 ease-in-out active:scale-95 shadow-lg shadow-slate-200 hover:shadow-xl">
                     Criar <span class="hidden sm:inline">Orçamento</span>
                 </a>
@@ -192,7 +188,6 @@
             </p>
             
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <!-- Botão Suave Hero (Gradiente) -->
                 <a href="#app-section" class="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-extrabold text-lg transition-all duration-300 ease-out flex items-center justify-center gap-2 shadow-xl shadow-green-200 active:scale-95 border border-transparent">
                     Começar Agora
                     <i data-lucide="arrow-down" class="w-5 h-5 text-white"></i>
@@ -350,13 +345,14 @@
                     <!-- Botões de Ação -->
                     <div class="flex flex-col gap-3">
                         <button onclick="handleActionWithDelay('whatsapp')" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-green-100 active:scale-95 flex items-center justify-center gap-3 text-lg">
-                            <i data-lucide="message-circle" class="w-6 h-6"></i> Enviar via WhatsApp
+                            <i class="fa-brands fa-whatsapp text-2xl"></i> Enviar via WhatsApp
                         </button>
                         <div class="grid grid-cols-2 gap-3">
                             <button onclick="handleActionWithDelay('pdf')" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm sm:text-base">
                                 <i data-lucide="printer" class="w-5 h-5 text-green-400"></i> Gerar PDF
                             </button>
-                            <button onclick="showModalReset()" class="bg-white border border-slate-200 text-slate-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 hover:text-red-500 hover:border-red-200 text-sm sm:text-base">
+                            <!-- Botão Limpar protegido -->
+                            <button onclick="handleActionWithDelay('reset')" class="bg-white border border-slate-200 text-slate-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 hover:text-red-500 hover:border-red-200 text-sm sm:text-base">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i> Limpar
                             </button>
                         </div>
@@ -451,6 +447,11 @@
         </div>
     </footer>
 
+    <!-- Floating WhatsApp Button (Atualizado com FontAwesome e seu Estilo) -->
+    <a href="https://api.whatsapp.com/send?phone=5511980960531&text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20ZapBudget" target="_blank" class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25d366] text-white rounded-full flex items-center justify-center text-3xl shadow-2xl hover:scale-110 active:scale-95 transition-all shadow-green-500/20 no-print">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
     <!-- MODAL DE RESET -->
     <div id="modalReset" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-[32px] p-8 max-w-xs w-full shadow-2xl space-y-6 text-center modal-enter">
@@ -468,7 +469,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONVERSÃO (10 SEGUNDOS) -->
+    <!-- MODAL DE CONVERSÃO (5 SEGUNDOS) -->
     <div id="conversionModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[60] hidden items-center justify-center p-6">
         <div class="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center modal-enter border-t-8 border-green-500 relative">
             
@@ -488,24 +489,29 @@
                 </p>
             </div>
 
+            <!-- Tempo reduzido para 5 segundos -->
             <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div id="progressBar" class="bg-green-500 h-2 rounded-full w-0 transition-all duration-[10000ms] ease-linear"></div>
+                <div id="progressBar" class="bg-green-500 h-2 rounded-full w-0 transition-all duration-[5000ms] ease-linear"></div>
             </div>
 
-            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Finalizando em 10 segundos</p>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Finalizando em 5 segundos</p>
         </div>
     </div>
 
     <div id="toast"></div>
 
     <script>
+        const SUPABASE_URL = "https://pxwsebtpmghhgbigkddx.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_lQh9j9TlA3-7S35jqFjefA_fh4sswez";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         lucide.createIcons();
         const inputs = ['vendorName', 'clientName', 'serviceDescription', 'totalValue', 'expiryDate', 'deliveryTime', 'paymentMethod'];
         
         // Define data fixa inicial conforme solicitado, mas atualiza se necessário
         document.getElementById('currentDate').innerText = "11/02/2026";
 
-        // Variável de controle para o bloqueio de 10s
+        // Variável de controle para o bloqueio de 5s
         let isConversionUnlocked = false;
 
         function showToast(message) {
@@ -515,16 +521,35 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // Lógica do Modal de Espera
-        function handleActionWithDelay(type) {
-            // Se já foi desbloqueado, executa direto
+        // Lógica do Modal de Espera COM VERIFICAÇÃO DE LOGIN
+        async function handleActionWithDelay(type) {
+            
+            // 1. Verifica se o usuário está autenticado
+            const { data: { session } } = await supabaseClient.auth.getSession();
+
+            // 2. Se NÃO estiver logado, bloqueia e redireciona
+            if (!session) {
+                showToast("🔒 Crie uma conta gratuita para liberar o recurso!");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 2000); // 2 segundos para ler a mensagem
+                return;
+            }
+
+            // 3. Se for o botão de RESET, mostra o modal de reset (pois já passou na verificação de login)
+            if (type === 'reset') {
+                showModalReset();
+                return;
+            }
+
+            // 4. Se já foi desbloqueado (já esperou os 5s), executa a ação direta
             if (isConversionUnlocked) {
                 if (type === 'whatsapp') shareWhatsApp();
                 if (type === 'pdf') window.print();
                 return;
             }
 
-            // Se não, mostra o modal e inicia o contador
+            // 5. Se não, mostra o modal de espera e inicia o contador de 5s
             const modal = document.getElementById('conversionModal');
             const progressBar = document.getElementById('progressBar');
             
@@ -536,7 +561,7 @@
                 progressBar.style.width = '100%';
             }, 100);
 
-            // Aguarda 10 segundos
+            // Aguarda 5 segundos (5000ms)
             setTimeout(() => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
@@ -544,7 +569,7 @@
                 
                 showToast("🎉 Pronto! Agora você pode finalizar.");
                 
-            }, 10000);
+            }, 5000);
         }
 
         // Máscara de Moeda
