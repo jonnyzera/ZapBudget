@@ -26,6 +26,8 @@
     </script>
 
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Adicionado FontAwesome para ícone do WhatsApp -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
     <style>
@@ -58,7 +60,7 @@
 
         /* Inputs blindados contra modo noturno */
         input, textarea, select {
-            background-color: #f8fafc !important;
+            background-color: #ffffff !important; /* MUDADO: Fundo branco */
             color: #0f172a !important;
             -webkit-text-fill-color: #0f172a !important;
             border: 1px solid #e2e8f0;
@@ -177,9 +179,11 @@
 
     <div id="toast-container"></div>
 
+    <!-- NAVBAR DESKTOP -->
     <nav class="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-4 sm:gap-6">
+            <!-- Esquerda: Logo -->
+            <div class="flex items-center">
                 <a href="index.html" class="flex items-center gap-2 group">
                     <div class="bg-green-600 p-1.5 rounded-lg text-white group-hover:bg-green-700 transition-colors">
                         <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
@@ -187,8 +191,29 @@
                     <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
                 </a>
             </div>
-            <div id="user-nav" class="flex items-center gap-4">
-                <div class="h-10 w-24 bg-slate-100 rounded-full animate-pulse"></div>
+
+            <!-- Direita: Navegação e User Nav -->
+            <div class="flex items-center gap-8">
+                <!-- Navegação Desktop (Agora à direita, sem fundos) -->
+                <div class="hidden lg:flex items-center gap-6">
+                    <a href="app.html" class="text-sm font-bold text-green-600 hover:text-green-700 transition-colors flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo
+                    </a>
+                    <a href="historico.html" class="text-sm font-bold text-slate-500 hover:text-green-600 transition-colors flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4"></i> Histórico
+                    </a>
+                    <a href="perfil.html" class="text-sm font-bold text-slate-500 hover:text-green-600 transition-colors flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4"></i> Perfil
+                    </a>
+                </div>
+
+                <!-- Divisor Vertical -->
+                <div class="hidden lg:block w-px h-6 bg-slate-200"></div>
+
+                <!-- User Nav -->
+                <div id="user-nav" class="flex items-center gap-4">
+                    <!-- Removed grey skeleton circle -->
+                </div>
             </div>
         </div>
     </nav>
@@ -202,6 +227,7 @@
                     <p class="text-slate-500 font-medium">Preencha os campos abaixo para gerar o documento.</p>
                 </div>
 
+                <!-- Formulário com fundo branco e limpo -->
                 <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-100 border border-slate-100 space-y-6">
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-wider">
@@ -210,11 +236,11 @@
                         <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Sua Empresa ou Nome</label>
-                                <input type="text" id="vendorName" placeholder="Ex: João Silva Reformas" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                                <input type="text" id="vendorName" placeholder="Ex: João Silva Reformas" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Nome do Cliente</label>
-                                <input type="text" id="clientName" placeholder="Ex: Maria Oliveira" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                                <input type="text" id="clientName" placeholder="Ex: Maria Oliveira" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
                             </div>
                         </div>
                     </div>
@@ -225,16 +251,16 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Descrição Detalhada</label>
-                            <textarea id="serviceDescription" rows="4" placeholder="O que será realizado?" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all"></textarea>
+                            <textarea id="serviceDescription" rows="4" placeholder="O que será realizado?" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all"></textarea>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Prazo de Entrega</label>
-                                <input type="text" id="deliveryTime" placeholder="Ex: 5 dias úteis" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                                <input type="text" id="deliveryTime" placeholder="Ex: 5 dias úteis" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Forma de Pagamento</label>
-                                <input type="text" id="paymentMethod" placeholder="Ex: 50% ato" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                                <input type="text" id="paymentMethod" placeholder="Ex: 50% ato" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
                             </div>
                         </div>
                     </div>
@@ -246,11 +272,11 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Valor Total</label>
-                                <input type="text" id="totalValue" placeholder="R$ 0,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-lg font-bold text-green-700 transition-all">
+                                <input type="text" id="totalValue" placeholder="R$ 0,00" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-lg font-bold text-green-700 transition-all">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase tracking-widest">Validade</label>
-                                <input type="date" id="expiryDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
+                                <input type="date" id="expiryDate" class="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm font-medium transition-all">
                             </div>
                         </div>
                     </div>
@@ -262,12 +288,16 @@
                         Gerar PDF / Imprimir
                     </button>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button id="btnZap" onclick="handleMainAction()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md active:scale-[0.98]">
-                            <i data-lucide="message-circle" class="w-5 h-5"></i> Enviar WhatsApp
+                    <button id="btnZap" onclick="handleMainAction()" class="w-full bg-[#25D366] hover:bg-[#1eb956] text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-lg shadow-md active:scale-[0.98]">
+                        <i class="fa-brands fa-whatsapp text-2xl"></i> Enviar WhatsApp
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="saveToHistory()" id="btnSave" class="w-full bg-white border border-slate-200 text-slate-500 hover:text-green-600 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-sm active:scale-[0.98]">
+                            <i data-lucide="save" class="w-4 h-4"></i> Salvar no Histórico
                         </button>
                         
-                        <button onclick="showModalReset()" class="w-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm">
+                        <button onclick="showModalReset()" class="w-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-sm active:scale-[0.98]">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Limpar Tudo
                         </button>
                     </div>
@@ -371,18 +401,19 @@
         </div>
     </footer>
 
+    <!-- MOBILE NAVIGATION (ATUALIZADO) -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden no-print">
         <button onclick="location.href='app.html'" class="flex flex-col items-center gap-1 text-green-600">
             <i data-lucide="plus-circle" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Novo</span>
         </button>
-        <button onclick="window.location.href='historico.html'" class="flex flex-col items-center gap-1 text-slate-400">
+        <button onclick="window.location.href='historico.html'" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-colors">
             <i data-lucide="history" class="w-6 h-6"></i>
             <span class="text-[10px] font-bold uppercase">Histórico</span>
         </button>
-        <button onclick="window.location.href='index.html#beneficios'" class="flex flex-col items-center gap-1 text-slate-400">
-            <i data-lucide="crown" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Benefícios</span>
+        <button onclick="window.location.href='perfil.html'" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-colors">
+            <i data-lucide="user" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase">Perfil</span>
         </button>
     </div>
 
@@ -657,6 +688,7 @@
                     
                     if (profile) {
                         const displayName = profile.full_name || name;
+                        const initial = displayName.charAt(0).toUpperCase();
                         
                         if (profile.is_premium) {
                             planInfo = `<span class="text-green-600 font-black text-[10px] uppercase tracking-widest flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3 fill-current"></i> PRO</span>`;
@@ -682,12 +714,10 @@
                             <div class="flex items-center gap-3 animate-fade-in">
                                 ${upgradeBtn}
                                 
-                                <div class="group relative flex items-center gap-3 bg-slate-50 hover:bg-white border border-slate-200 hover:border-slate-300 p-1.5 pr-5 rounded-full transition-all cursor-default shadow-sm hover:shadow-md">
-                                    <div class="h-10 w-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 text-slate-600 relative overflow-hidden">
-                                        <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="12" cy="7" r="4"></circle>
-                                        </svg>
+                                <div class="group relative flex items-center gap-3 p-1.5 pr-5 cursor-default">
+                                    <!-- Avatar com Inicial em vez de ícone cinza -->
+                                    <div class="h-10 w-10 bg-green-600 rounded-full flex items-center justify-center shadow-lg text-white font-bold text-lg relative overflow-hidden border-2 border-white ring-2 ring-green-100">
+                                        ${initial}
                                     </div>
                                     
                                     <div class="flex flex-col">
@@ -756,6 +786,72 @@
             await shareWhatsApp();
         }
 
+        // Nova função para apenas salvar no histórico
+        async function saveToHistory() {
+            const btn = document.getElementById('btnSave');
+            const original = btn.innerHTML;
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+
+            if (!currentUser) {
+                showToast("Crie sua conta para salvar.", "error");
+                showAuthModal();
+                return;
+            }
+
+            const payload = {
+                user_id: currentUser.id,
+                vendor_name: document.getElementById('vendorName').value || 'Profissional',
+                client_name: document.getElementById('clientName').value,
+                servicos: document.getElementById('serviceDescription').value,
+                valor: document.getElementById('totalValue').value,
+                prazo: document.getElementById('deliveryTime').value,
+                pagamento: document.getElementById('paymentMethod').value,
+                validade: document.getElementById('expiryDate').value
+            };
+
+            if (!payload.client_name || !payload.valor) {
+                showToast("Preencha o nome do cliente e o valor!", "error");
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Salvando...`;
+                lucide.createIcons();
+
+                if (editId) {
+                    const { error } = await supabaseClient
+                        .from('orçamentos')
+                        .update(payload)
+                        .eq('id', editId);
+                    if (error) throw error;
+                } else {
+                    const res = await fetch(`${API_URL}/orcamentos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.status === 402) { 
+                        document.getElementById('upgradeModal').classList.replace('hidden', 'flex'); 
+                        return; 
+                    }
+                }
+
+                showToast(editId ? "Orçamento atualizado!" : "Salvo no histórico!");
+                // Opcional: Redirecionar para o histórico ou limpar
+                // setTimeout(() => window.location.href = 'historico.html', 1000);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Erro ao salvar.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                lucide.createIcons();
+            }
+        }
+
         async function shareWhatsApp() {
             const btn = document.getElementById('btnZap');
             const original = btn.innerHTML;
@@ -818,7 +914,7 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = original;
-                lucide.createIcons();
+                // Como substituímos o ícone por <i> fontawesome, não precisamos chamar lucide.createIcons() aqui para este botão específico, mas mal não faz.
             }
         }
 

@@ -1,0 +1,55 @@
+<div id="welcomeModal" class="fixed inset-0 z-[120] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity" onclick="closeWelcomeModal()"></div>
+
+    <div class="relative bg-white rounded-[40px] overflow-hidden max-w-sm w-full shadow-2xl modal-enter">
+        
+        <div class="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-green-500 to-green-700"></div>
+        <div class="absolute top-0 left-0 right-0 h-32 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 16px 16px;"></div>
+
+        <div class="relative z-10 px-8 pt-12 pb-8 text-center">
+            
+            <div class="mx-auto w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl shadow-green-900/20 mb-6 border-4 border-white animate-bounce-slow">
+                <i data-lucide="zap" class="w-10 h-10 text-green-600 fill-current"></i>
+            </div>
+
+            <h2 class="text-2xl font-black text-slate-900 mb-2 leading-tight">
+                Conta Criada <br><span class="text-green-600">com Sucesso!</span>
+            </h2>
+            
+            <p class="text-slate-500 font-medium text-sm mb-6 leading-relaxed">
+                Bem-vindo ao ZapBudget. Para começar com o pé direito, preparamos um presente para você.
+            </p>
+
+            <div class="bg-slate-50 border-2 border-green-100 rounded-2xl p-4 mb-8 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-widest">
+                    Presente
+                </div>
+                
+                <div class="flex items-center gap-4 text-left">
+                    <div class="bg-green-100 p-3 rounded-xl text-green-600">
+                        <i data-lucide="crown" class="w-6 h-6 fill-current"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Status Premium</p>
+                        <p class="text-lg font-black text-slate-900 leading-none">7 Dias Grátis</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeWelcomeModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl text-lg shadow-xl shadow-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                COMEÇAR AGORA <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Animação suave para o ícone */
+    @keyframes bounce-slow {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    .animate-bounce-slow {
+        animation: bounce-slow 3s infinite ease-in-out;
+    }
+</style>
