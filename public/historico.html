@@ -79,6 +79,7 @@
             animation: toastIn 0.3s ease-out forwards; pointer-events: auto;
             border-left: 4px solid #16a34a;
         }
+        .toast.error { border-left: 4px solid #ef4444; }
         @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
     </style>
@@ -87,7 +88,6 @@
 
     <div id="toast-container"></div>
 
-    <!-- NAVBAR DESKTOP -->
     <nav class="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
             <div class="flex items-center">
@@ -117,7 +117,6 @@
         </div>
     </nav>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8 lg:py-12">
         
         <div class="flex justify-between items-end mb-8">
@@ -131,14 +130,12 @@
         </div>
 
         <div id="budget-list" class="space-y-4">
-            <!-- Skeletons -->
             <div class="skeleton h-32 w-full rounded-[24px]"></div>
             <div class="skeleton h-32 w-full rounded-[24px]"></div>
             <div class="skeleton h-32 w-full rounded-[24px]"></div>
         </div>
     </main>
 
-    <!-- FOOTER -->
     <footer class="bg-slate-900 text-slate-500 pt-12 pb-24 lg:pb-12 mt-auto border-t border-white/5">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <div class="flex items-center justify-center gap-2 mb-6">
@@ -149,7 +146,6 @@
         </div>
     </footer>
 
-    <!-- MOBILE NAVIGATION -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden">
         <button onclick="location.href='app.html'" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-colors">
             <i data-lucide="plus-circle" class="w-6 h-6"></i>
@@ -173,17 +169,22 @@
 
         lucide.createIcons();
 
-        function showToast(message) {
+        function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            const icon = type === 'error' ? 'alert-circle' : 'check-circle';
+            const color = type === 'error' ? 'text-red-500' : 'text-green-500';
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-            setTimeout(() => { toast.remove(); }, 3000);
+            setTimeout(() => { toast.style.animation = 'toastOut 0.3s ease-in forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
         async function updateStatus(id, newStatus) {
+            // Feedback visual imediato "Salvando..."
+            showToast("Atualizando status...", "normal");
+
             const { error } = await supabaseClient
                 .from('orçamentos')
                 .update({ status: newStatus })
@@ -191,7 +192,7 @@
 
             if (error) {
                 console.error(error);
-                alert("Erro ao atualizar status");
+                showToast("Erro ao atualizar!", "error");
             } else {
                 // Atualiza a cor visualmente
                 const select = document.getElementById(`status-${id}`);
@@ -201,9 +202,36 @@
                     'Aprovado': 'text-green-600',
                     'Recusado': 'text-red-500'
                 };
-                // Remove todas as classes de cor e adiciona a nova
                 Object.values(colors).forEach(c => select.classList.remove(c));
                 select.classList.add(colors[newStatus] || 'text-slate-400');
+                showToast("Status salvo com sucesso!");
+            }
+        }
+
+        async function deleteBudget(id) {
+            if (!confirm("Tem certeza que deseja excluir este orçamento?")) return;
+
+            const { error } = await supabaseClient
+                .from('orçamentos')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error("Erro ao excluir:", error);
+                showToast("Erro ao excluir.", "error");
+            } else {
+                showToast("Orçamento excluído!");
+                // Remove o elemento da tela
+                const el = document.getElementById(`card-${id}`);
+                if (el) {
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 300);
+                }
+                // Se ficou vazio, recarrega para mostrar msg de vazio
+                setTimeout(() => {
+                    const container = document.getElementById('budget-list');
+                    if (container.children.length === 0) loadBudgets();
+                }, 500);
             }
         }
 
@@ -216,11 +244,10 @@
                 }
                 currentUser = session.user;
                 
-                // Carrega User Nav (Avatar)
+                // User Nav
                 const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
                 const initial = name.charAt(0).toUpperCase();
-                const nav = document.getElementById('user-nav');
-                nav.innerHTML = `
+                document.getElementById('user-nav').innerHTML = `
                     <a href="perfil.html" class="h-10 w-10 bg-green-600 rounded-full flex items-center justify-center shadow-lg text-white font-bold text-lg border-2 border-white ring-2 ring-green-100 transition-transform hover:scale-105">
                         ${initial}
                     </a>
@@ -260,7 +287,7 @@
                     const date = new Date(b.created_at).toLocaleDateString('pt-BR');
 
                     return `
-                    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-xl shadow-slate-50 hover:shadow-2xl transition-all flex flex-col gap-4 group relative overflow-hidden">
+                    <div id="card-${b.id}" class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-xl shadow-slate-50 hover:shadow-2xl transition-all flex flex-col gap-4 group relative overflow-hidden">
                         
                         <div class="flex justify-between items-start">
                             <div class="flex items-center gap-4">
@@ -275,7 +302,7 @@
                             
                             <div class="text-right">
                                 <p class="text-lg font-black text-slate-900">${b.valor}</p>
-                                <select id="status-${b.id}" onchange="updateStatus('${b.id}', this.value)" class="text-[10px] font-black uppercase tracking-widest bg-transparent border-none p-0 focus:ring-0 cursor-pointer ${statusColors[status]} transition-colors text-right dir-rtl">
+                                <select id="status-${b.id}" onchange="updateStatus('${b.id}', this.value)" class="text-[10px] font-black uppercase tracking-widest bg-transparent border-none p-0 focus:ring-0 cursor-pointer ${statusColors[status]} transition-colors text-right dir-rtl outline-none">
                                     <option value="Pendente" ${status === 'Pendente' ? 'selected' : ''}>Pendente</option>
                                     <option value="Enviado" ${status === 'Enviado' ? 'selected' : ''}>Enviado</option>
                                     <option value="Aprovado" ${status === 'Aprovado' ? 'selected' : ''}>Aprovado</option>
@@ -293,6 +320,9 @@
                             <a href="view.html?id=${b.id}" target="_blank" class="flex-1 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-lg active:scale-95">
                                 <i data-lucide="eye" class="w-4 h-4"></i> Ver
                             </a>
+                            <button onclick="deleteBudget('${b.id}')" class="h-10 w-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
 
                     </div>`;

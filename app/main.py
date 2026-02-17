@@ -196,8 +196,14 @@ async def salvar_orcamento(dados: Orcamento):
             if datetime.now(timezone.utc) > (trial_start + timedelta(days=7)):
                 raise HTTPException(status_code=402, detail="Teste expirado. Faça o upgrade para continuar.")
 
-        # Salva o orçamento
+        # --- CORREÇÃO DO ERRO DE DATA VAZIA ---
         payload = dados.model_dump(exclude_none=True)
+        
+        # Se 'validade' estiver vazia (""), transformamos em None para o Banco aceitar como NULL
+        if "validade" in payload and not payload["validade"]:
+            payload["validade"] = None
+
+        # Salva o orçamento
         res_budget = supabase.table("orçamentos").insert(payload).execute()
         
         if not res_budget.data:
