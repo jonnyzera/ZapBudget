@@ -31,6 +31,16 @@
             outline: none; border-color: #22c55e;
             box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
         }
+
+        /* ESTILO PARA QUANDO DER ERRO EM UM CAMPO */
+        .input-error {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #b91c1c !important;
+        }
+        .input-error:focus {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+        }
         
         button { min-height: 56px; }
 
@@ -41,27 +51,9 @@
             background: white; border: 1px solid #e2e8f0; color: #1e293b; transition: all 0.2s;
         }
         .google-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-
-        /* TOAST STYLES */
-        #toast-container {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 9999; width: 90%; max-width: 400px; pointer-events: none;
-        }
-        .toast {
-            background: white; padding: 16px; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
-            animation: toastIn 0.3s ease-out forwards; pointer-events: auto;
-            border-left: 4px solid #16a34a;
-        }
-        .toast.error { border-left-color: #ef4444; }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
     </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
-
-    <div id="toast-container"></div>
 
     <a href="index.html" class="absolute top-6 left-6 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-900 transition-all group z-10">
         <div class="bg-slate-50 p-2 rounded-full group-hover:bg-slate-100 transition-colors">
@@ -83,6 +75,16 @@
 
         <div class="bg-white p-6 sm:p-10 rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50">
             
+            <div id="error-alert" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 mt-0.5 shrink-0"></i>
+                    <div>
+                        <h4 class="text-sm font-black text-red-700 uppercase tracking-wide">Erro no Cadastro</h4>
+                        <p id="error-message" class="text-sm text-red-600 font-medium leading-tight mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
             <button onclick="handleGoogleLogin()" class="w-full google-btn font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mb-6 active:scale-95 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -153,22 +155,32 @@
         let authMode = 'login';
         lucide.createIcons();
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
-            const icon = type === 'error' ? 'alert-circle' : 'check-circle';
-            const color = type === 'error' ? 'text-red-500' : 'text-green-500';
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => { 
-                toast.style.animation = 'toastOut 0.3s ease-in forwards'; 
-                setTimeout(() => toast.remove(), 300); 
-            }, 4000);
+        // Limpa campos pintados de vermelho e some o aviso
+        function clearErrors() {
+            document.getElementById('error-alert').classList.add('hidden');
+            document.querySelectorAll('input').forEach(i => i.classList.remove('input-error'));
+        }
+
+        // Exibe o erro e pinta a borda do campo
+        function showError(message, fieldId = null) {
+            clearErrors();
+            const alertBox = document.getElementById('error-alert');
+            const msgText = document.getElementById('error-message');
+            
+            msgText.innerText = message;
+            alertBox.classList.remove('hidden');
+            
+            if (fieldId) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.classList.add('input-error');
+                    field.focus();
+                }
+            }
         }
 
         function toggleAuthMode(mode) {
+            clearErrors();
             authMode = mode;
             const signupFields = document.getElementById('signup-fields');
             const confirmPass = document.getElementById('confirm-pass-field');
@@ -201,6 +213,8 @@
 
         async function handleAuth(e) {
             e.preventDefault();
+            clearErrors();
+            
             const btn = document.getElementById('auth-btn');
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
@@ -215,24 +229,72 @@
                     const cpf = document.getElementById('auth-cpf').value;
                     const confirmPass = document.getElementById('auth-confirm-password').value;
 
-                    if (!name || !cpf) throw new Error("Preencha nome e CPF.");
-                    if (password !== confirmPass) throw new Error("As senhas não coincidem.");
+                    // Validações antes de enviar
+                    if (!name) throw { msg: "Preencha seu Nome Completo.", field: "auth-name" };
+                    if (!cpf) throw { msg: "O CPF é obrigatório.", field: "auth-cpf" };
+                    if (cpf.length !== 11) throw { msg: "O CPF deve conter exatamente 11 números.", field: "auth-cpf" };
+                    if (!email) throw { msg: "O E-mail é obrigatório.", field: "auth-email" };
+                    if (password !== confirmPass) throw { msg: "As senhas não coincidem.", field: "auth-confirm-password" };
 
+                    // Chama a API
                     const response = await fetch('/api/auth/signup', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ name, email, cpf, password })
                     });
-                    const data = await response.json();
-
-                    if (!response.ok) throw new Error(data.detail || "Erro ao criar conta.");
                     
-                    showToast("Conta criada! Redirecionando para login...");
-                    setTimeout(() => toggleAuthMode('login'), 2000); 
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (err) {
+                        throw { msg: "Erro de conexão com o servidor. Tente novamente.", field: null };
+                    }
+
+                    if (!response.ok) {
+                        let errorMsg = "Erro ao criar conta.";
+                        
+                        // Lida com erros do Pydantic (formato inválido)
+                        if (data.detail && Array.isArray(data.detail)) {
+                            errorMsg = data.detail[0].msg;
+                            if (errorMsg.includes("email") || errorMsg.includes("value error")) {
+                                throw { msg: "Formato de E-mail inválido.", field: "auth-email" };
+                            }
+                        } else if (data.detail) {
+                            errorMsg = data.detail;
+                        }
+                        
+                        // Detecta o campo pelo texto do erro e traduz mensagens em inglês
+                        let errorField = null;
+                        let msgLower = errorMsg.toLowerCase();
+
+                        if (msgLower.includes("cpf")) {
+                            errorField = "auth-cpf";
+                        } 
+                        else if (msgLower.includes("e-mail") || msgLower.includes("email")) {
+                            errorField = "auth-email";
+                        } 
+                        // TRADUÇÃO DO ERRO DE SENHA DO SUPABASE AQUI:
+                        else if (msgLower.includes("password should be at least 6 characters")) {
+                            errorMsg = "A senha deve ter pelo menos 6 caracteres.";
+                            errorField = "auth-password";
+                        }
+                        // TRADUÇÃO DO ERRO DE LIMITE (RATE LIMIT):
+                        else if (msgLower.includes("rate limit") || msgLower.includes("too many requests")) {
+                            errorMsg = "Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.";
+                            errorField = null; // Erro geral, não foca em um campo específico
+                        }
+                        
+                        throw { msg: errorMsg, field: errorField };
+                    }
+                    
+                    alert("Sua conta foi criada! Faça login agora.");
+                    document.getElementById('auth-password').value = "";
+                    document.getElementById('auth-confirm-password').value = "";
+                    toggleAuthMode('login'); 
 
                 } else {
                     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
+                    if (error) throw { msg: "E-mail ou Senha incorretos. Verifique e tente novamente.", field: "auth-password" };
 
                     if (data.user) {
                         const provider = data.user.app_metadata.provider || 'email';
@@ -244,14 +306,20 @@
                         btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
                         lucide.createIcons();
                         setTimeout(() => { window.location.href = "app.html"; }, 800);
-                        return; 
+                        return; // Impede o botão de resetar
                     }
                 }
             } catch (err) {
-                console.error("Auth Error:", err);
-                // Exibe o erro de forma bonita no topo
-                showToast(err.message, "error");
+                // Se o erro foi gerado por nós com "msg" e "field"
+                if (err.msg) {
+                    showError(err.msg, err.field);
+                } else {
+                    // Erros genéricos
+                    showError(err.message || "Ocorreu um erro inesperado.");
+                    console.error("Auth Error:", err);
+                }
             } finally {
+                // SE O BOTÃO NÃO ESTIVER ESCRITO "SUCESSO", VOLTA AO NORMAL
                 if (!btn.innerHTML.includes("SUCESSO")) {
                     btn.disabled = false;
                     btn.innerHTML = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO SISTEMA";
@@ -267,7 +335,7 @@
                 });
                 if (error) throw error;
             } catch (err) {
-                showToast("Erro Google: " + err.message, "error");
+                showError("Falha na conexão com Google: " + err.message);
             }
         }
     </script>

@@ -64,7 +64,7 @@ class UserSignUp(BaseModel):
     cpf: str
     password: str
 
-# --- ROTA DE CADASTRO (DEBUG) ---
+# --- ROTA DE CADASTRO (CORRIGIDA) ---
 @app.post("/api/auth/signup")
 async def signup_manual(user: UserSignUp):
     if not supabase:
@@ -72,44 +72,47 @@ async def signup_manual(user: UserSignUp):
     
     clean_cpf = user.cpf.replace(".", "").replace("-", "")
     if len(clean_cpf) != 11 or not clean_cpf.isdigit():
-        raise HTTPException(status_code=400, detail="CPF inválido. Digite 11 números.")
+        raise HTTPException(status_code=400, detail="CPF inválido. Digite apenas os 11 números.")
 
+    # 1. VERIFICAR SE O CPF JÁ EXISTE
     try:
-        # Tenta verificar CPF. Se a coluna não existir, captura o erro para não travar feio.
-        try:
-            check_cpf = supabase.table("profiles").select("id").eq("cpf", clean_cpf).execute()
-            if check_cpf.data:
-                raise HTTPException(status_code=400, detail="Este CPF já está em uso.")
-        except Exception as e:
-            err_str = str(e).lower()
-            if "column" in err_str and "does not exist" in err_str:
-                print("ERRO: Coluna CPF não criada no Supabase.")
-                # Se não criou a coluna, deixamos passar o cadastro sem checar CPF para não travar o usuário
-                pass 
-            else:
-                raise e
+        check_cpf = supabase.table("profiles").select("id").eq("cpf", clean_cpf).execute()
+        if check_cpf.data and len(check_cpf.data) > 0:
+            raise HTTPException(status_code=400, detail="Este CPF já está em uso em outra conta.")
+    except HTTPException as he:
+        # Repassa o erro de CPF duplicado diretamente para o Frontend
+        raise he 
+    except Exception as e:
+        # Se der erro de "coluna não existe", ignoramos para não travar. Outros erros quebram a execução.
+        err_str = str(e).lower()
+        if "column" not in err_str or "does not exist" not in err_str:
+            raise HTTPException(status_code=500, detail="Erro de conexão ao verificar o CPF.")
 
-        # Cria usuário Auth
-        try:
-            auth_res = supabase.auth.sign_up({
-                "email": user.email,
-                "password": user.password,
-                "options": { "data": { "full_name": user.name, "cpf": clean_cpf } }
-            })
+    # 2. CRIAR O USUÁRIO NO AUTH E VERIFICAR EMAIL
+    try:
+        auth_res = supabase.auth.sign_up({
+            "email": user.email,
+            "password": user.password,
+            "options": { "data": { "full_name": user.name, "cpf": clean_cpf } }
+        })
+        
+        if not auth_res.user:
+             raise HTTPException(status_code=400, detail="Não foi possível criar a conta.")
+        
+        if auth_res.user.identities is not None and len(auth_res.user.identities) == 0:
+             raise HTTPException(status_code=400, detail="Este E-mail já está em uso.")
+
+    except Exception as auth_error:
+        msg = str(auth_error).lower()
+        if "already registered" in msg:
+            raise HTTPException(status_code=400, detail="Este E-mail já está em uso. Faça Login.")
+        # Traduz o erro de senha curta
+        elif "password should be at least 6 characters" in msg:
+            raise HTTPException(status_code=400, detail="A senha deve ter pelo menos 6 caracteres.")
             
-            if not auth_res.user:
-                 raise HTTPException(status_code=400, detail="Erro ao criar conta. E-mail pode já existir.")
-            
-            if auth_res.user.identities is not None and len(auth_res.user.identities) == 0:
-                 raise HTTPException(status_code=400, detail="Este e-mail já está cadastrado.")
-
-        except Exception as auth_error:
-            msg = str(auth_error).lower()
-            if "already registered" in msg:
-                raise HTTPException(status_code=400, detail="E-mail já cadastrado. Faça login.")
-            raise auth_error 
-
-        # Cria Perfil
+        raise HTTPException(status_code=400, detail=str(auth_error))
+    # 3. SALVAR NA TABELA PROFILES
+    try:
         supabase.table("profiles").upsert({
             "id": auth_res.user.id,
             "full_name": user.name,
@@ -118,14 +121,10 @@ async def signup_manual(user: UserSignUp):
             "is_premium": False,
             "provider": "email"
         }).execute()
-
-        return {"status": "success"}
-    
-    except HTTPException as he:
-        raise he
     except Exception as e:
-        print(f"Erro Signup: {e}")
-        raise HTTPException(status_code=400, detail="Erro ao processar. Tente novamente.")
+        print(f"Erro ao salvar profile (ignorado): {e}")
+
+    return {"status": "success", "message": "Conta criada com sucesso"}
 
 # --- DEMAIS ROTAS ---
 @app.post("/api/webhook/stripe")
