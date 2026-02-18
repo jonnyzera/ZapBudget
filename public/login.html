@@ -16,54 +16,52 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        :root {
-            color-scheme: light;
-        }
+        :root { color-scheme: light; }
         
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
             background-color: #ffffff !important;
             color: #0f172a !important;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Previne zoom em inputs no iOS */
-        input:focus, select:focus, textarea:focus {
-            font-size: 16px !important;
-        }
+        input:focus, select:focus, textarea:focus { font-size: 16px !important; }
         
         input:focus {
-            outline: none;
-            border-color: #22c55e;
+            outline: none; border-color: #22c55e;
             box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
         }
         
-        button {
-            min-height: 56px;
-        }
+        button { min-height: 56px; }
 
-        .auth-card {
-            animation: slideUp 0.4s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .auth-card { animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .google-btn {
-            background: white;
-            border: 1px solid #e2e8f0;
-            color: #1e293b;
-            transition: all 0.2s;
+            background: white; border: 1px solid #e2e8f0; color: #1e293b; transition: all 0.2s;
         }
-        .google-btn:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+        .google-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+        /* TOAST STYLES */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; width: 90%; max-width: 400px; pointer-events: none;
         }
+        .toast {
+            background: white; padding: 16px; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+            animation: toastIn 0.3s ease-out forwards; pointer-events: auto;
+            border-left: 4px solid #16a34a;
+        }
+        .toast.error { border-left-color: #ef4444; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
     </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
+
+    <div id="toast-container"></div>
 
     <a href="index.html" class="absolute top-6 left-6 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-900 transition-all group z-10">
         <div class="bg-slate-50 p-2 rounded-full group-hover:bg-slate-100 transition-colors">
@@ -101,14 +99,12 @@
                 <div class="flex-1 h-px bg-slate-100"></div>
             </div>
 
-            <!-- Abas Login / Cadastro -->
             <div class="flex bg-slate-50 p-1.5 rounded-2xl mb-6">
                 <button onclick="toggleAuthMode('login')" id="btn-tab-login" class="flex-1 py-3 text-xs font-bold rounded-xl bg-white shadow-sm transition-all text-slate-900">Entrar</button>
                 <button onclick="toggleAuthMode('signup')" id="btn-tab-signup" class="flex-1 py-3 text-xs font-bold text-slate-400 transition-all hover:text-slate-600">Cadastrar</button>
             </div>
 
             <form onsubmit="handleAuth(event)" class="space-y-5">
-                <!-- Campos de Cadastro (Ocultos inicialmente) -->
                 <div id="signup-fields" class="hidden space-y-5">
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
@@ -130,8 +126,6 @@
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Sua Senha</label>
                         <input type="password" id="auth-password" required placeholder="••••••••" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 transition-all text-sm sm:text-base">
                     </div>
-                    
-                    <!-- Confirmação de Senha (Oculto inicialmente) -->
                     <div id="confirm-pass-field" class="hidden">
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirmar Senha</label>
                         <input type="password" id="auth-confirm-password" placeholder="••••••••" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 transition-all text-sm sm:text-base">
@@ -159,6 +153,21 @@
         let authMode = 'login';
         lucide.createIcons();
 
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            const icon = type === 'error' ? 'alert-circle' : 'check-circle';
+            const color = type === 'error' ? 'text-red-500' : 'text-green-500';
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => { 
+                toast.style.animation = 'toastOut 0.3s ease-in forwards'; 
+                setTimeout(() => toast.remove(), 300); 
+            }, 4000);
+        }
+
         function toggleAuthMode(mode) {
             authMode = mode;
             const signupFields = document.getElementById('signup-fields');
@@ -169,26 +178,22 @@
             const tabLogin = document.getElementById('btn-tab-login');
             const tabSignup = document.getElementById('btn-tab-signup');
 
+            btnText.innerHTML = mode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO SISTEMA";
+
             if (mode === 'signup') {
                 signupFields.classList.remove('hidden');
                 confirmPass.classList.remove('hidden');
-                btnText.innerText = "CRIAR CONTA GRÁTIS";
                 title.innerText = "Criar Nova Conta";
-                
                 tabSignup.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
                 tabSignup.classList.remove('text-slate-400');
-                
                 tabLogin.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
                 tabLogin.classList.add('text-slate-400');
             } else {
                 signupFields.classList.add('hidden');
                 confirmPass.classList.add('hidden');
-                btnText.innerText = "ENTRAR NO SISTEMA";
                 title.innerText = "Acesse sua Conta";
-                
                 tabLogin.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
                 tabLogin.classList.remove('text-slate-400');
-                
                 tabSignup.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
                 tabSignup.classList.add('text-slate-400');
             }
@@ -213,48 +218,43 @@
                     if (!name || !cpf) throw new Error("Preencha nome e CPF.");
                     if (password !== confirmPass) throw new Error("As senhas não coincidem.");
 
-                    const { data, error } = await supabaseClient.auth.signUp({
-                        email: email,
-                        password: password,
-                        options: { data: { full_name: name, cpf: cpf } }
+                    const response = await fetch('/api/auth/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, cpf, password })
                     });
-                    if (error) throw error;
+                    const data = await response.json();
+
+                    if (!response.ok) throw new Error(data.detail || "Erro ao criar conta.");
                     
-                    alert("Conta criada! Verifique seu e-mail.");
-                    // Pode redirecionar ou aguardar verificação
+                    showToast("Conta criada! Redirecionando para login...");
+                    setTimeout(() => toggleAuthMode('login'), 2000); 
+
                 } else {
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({
-                        email: email,
-                        password: password,
-                    });
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                     if (error) throw error;
 
                     if (data.user) {
-                        // Garante que o perfil exista
                         const provider = data.user.app_metadata.provider || 'email';
                         await supabaseClient.from('profiles').upsert({
-                            id: data.user.id,
-                            provider: provider,
-                            trial_start: new Date().toISOString()
+                            id: data.user.id, provider, trial_start: new Date().toISOString()
                         }, { onConflict: 'id' });
                         
                         btn.classList.replace('bg-green-600', 'bg-slate-900');
                         btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> SUCESSO!`;
-                        
-                        // Redireciona para o APP (gerador) após login
+                        lucide.createIcons();
                         setTimeout(() => { window.location.href = "app.html"; }, 800);
+                        return; 
                     }
                 }
             } catch (err) {
-                console.error("Erro:", err.message);
-                alert("Erro: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO SISTEMA";
+                console.error("Auth Error:", err);
+                // Exibe o erro de forma bonita no topo
+                showToast(err.message, "error");
             } finally {
-                if(btn.disabled && btn.innerHTML.includes("SUCESSO")) {
-                    // Não faz nada, está redirecionando
-                } else {
+                if (!btn.innerHTML.includes("SUCESSO")) {
                     btn.disabled = false;
+                    btn.innerHTML = authMode === 'signup' ? "CRIAR CONTA GRÁTIS" : "ENTRAR NO SISTEMA";
                 }
             }
         }
@@ -263,13 +263,11 @@
             try {
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
-                    options: {
-                        redirectTo: window.location.origin + '/app.html'
-                    }
+                    options: { redirectTo: window.location.origin + '/app.html' }
                 });
                 if (error) throw error;
             } catch (err) {
-                alert("Erro ao conectar com Google: " + err.message);
+                showToast("Erro Google: " + err.message, "error");
             }
         }
     </script>
