@@ -46,9 +46,9 @@
             min-height: 100vh;
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
-        /* Bloqueio de Dark Mode */
         @media (prefers-color-scheme: dark) {
             body, html { background-color: #ffffff !important; color: #0f172a !important; }
             .bg-white { background-color: #ffffff !important; }
@@ -69,21 +69,23 @@
             animation: toastIn 0.3s ease-out forwards; pointer-events: auto;
             border-left: 4px solid #16a34a;
         }
-        .toast.error { border-left-color: #ef4444; }
         @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+        
+        /* Espaço para não cobrir conteúdo com a barra fixa inferior */
+        .pb-mobile-nav { padding-bottom: 100px; }
     </style>
 </head>
 <body class="bg-white text-slate-900 flex flex-col">
 
     <div id="toast-container"></div>
 
-    <nav class="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+    <!-- Navbar Desktop (Escondida no Mobile) -->
+    <nav class="hidden lg:block bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
             <div class="flex items-center">
                 <a href="index.html" class="flex items-center gap-2 group">
                     <div class="bg-green-600 p-1.5 rounded-lg text-white group-hover:bg-green-700 transition-colors">
-                        <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="zap" aria-hidden="true" class="lucide lucide-zap w-5 h-5 fill-current"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
                     </div>
                     <span class="font-bold text-lg tracking-tight">Zap<span class="text-green-600">Budget</span></span>
                 </a>
@@ -92,107 +94,114 @@
             <div class="flex items-center gap-8">
                 <div class="hidden lg:flex items-center gap-6">
                     <a href="app.html" class="text-sm font-bold text-slate-500 hover:text-green-600 transition-colors flex items-center gap-2">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus-circle" aria-hidden="true" class="lucide lucide-plus-circle w-4 h-4"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path></svg> Novo
                     </a>
                     <a href="historico.html" class="text-sm font-bold text-slate-500 hover:text-green-600 transition-colors flex items-center gap-2">
-                        <i data-lucide="history" class="w-4 h-4"></i> Histórico
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="history" aria-hidden="true" class="lucide lucide-history w-4 h-4"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg> Histórico
                     </a>
                     <a href="perfil.html" class="text-sm font-bold text-green-600 hover:text-green-700 transition-colors flex items-center gap-2">
-                        <i data-lucide="user" class="w-4 h-4"></i> Perfil
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user" aria-hidden="true" class="lucide lucide-user w-4 h-4"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Perfil
                     </a>
                 </div>
+
                 <div class="hidden lg:block w-px h-6 bg-slate-200"></div>
-                <div id="user-nav" class="flex items-center gap-4"></div>
+
+                <div id="user-nav" class="flex items-center gap-4">
+                </div>
             </div>
         </div>
     </nav>
 
-    <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8 pb-32 lg:py-12">
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-8 pb-mobile-nav lg:py-12">
         
-        <div class="mb-8">
-            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Meu Perfil</h1>
-            <p class="text-slate-500 font-medium">Gerencie suas informações e assinatura.</p>
+        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Meu Perfil</h1>
+                <p class="text-slate-500 font-medium text-sm">Gerencie sua assinatura e dados de acesso.</p>
+            </div>
+            <button onclick="handleLogout()" class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold px-6 py-2 rounded-2xl flex items-center gap-2 transition-all active:scale-95 text-xs uppercase tracking-widest h-12 w-fit">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+            </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            <div class="md:col-span-2 space-y-6">
-                <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-100 border border-slate-100 relative overflow-hidden">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div id="profile-avatar" class="h-20 w-20 bg-green-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-lg ring-4 ring-green-50">
-                            </div>
+            <!-- INFORMAÇÕES DA CONTA (Sempre em cima no mobile) -->
+            <div class="lg:col-span-7 order-1 space-y-6">
+                <div class="bg-white rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 shadow-xl shadow-slate-50 border border-slate-100 relative overflow-hidden">
+                    <div class="flex items-center gap-6 mb-8 sm:mb-10">
+                        <div id="profile-avatar" class="h-20 w-20 sm:h-28 sm:w-28 bg-green-600 rounded-[24px] sm:rounded-[38px] flex items-center justify-center text-3xl sm:text-5xl font-black text-white shadow-xl shadow-green-100 ring-4 sm:ring-8 ring-green-50">
+                            -
+                        </div>
                         <div>
-                            <h2 id="profile-name" class="text-xl font-bold text-slate-900">Carregando...</h2>
-                            <p class="text-sm text-slate-400 font-medium">Membro ZapBudget</p>
+                            <h2 id="profile-name" class="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">Carregando...</h2>
+                            <div id="plan-badge-simple" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">
+                                Verificando...
+                            </div>
                         </div>
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-1 gap-6 sm:gap-8">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">Método de Acesso</label>
-                            <div id="profile-provider" class="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
-                                <span class="animate-pulse w-20 h-4 bg-slate-200 rounded"></span>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest ml-1">E-mail Vinculado</label>
+                            <div id="profile-email" class="text-sm sm:text-base font-bold text-slate-700 bg-slate-50 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-slate-100 flex items-center justify-between overflow-hidden">
+                                <span class="truncate">...</span>
+                                <i data-lucide="mail" class="w-5 h-5 text-slate-300 flex-shrink-0"></i>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">Email da Conta</label>
-                            <div id="profile-email" class="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                ...
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">CPF Vinculado</label>
-                            <div id="profile-cpf-container">
-                                <div class="text-sm font-semibold text-slate-400 bg-slate-50 p-3 rounded-xl border border-slate-100 animate-pulse">
-                                    Carregando...
-                                </div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest ml-1">Plataforma de Login</label>
+                            <div id="profile-provider" class="text-sm sm:text-base font-bold text-slate-700 bg-slate-50 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-slate-100 flex items-center gap-3">
+                                <span class="animate-pulse w-24 h-4 bg-slate-200 rounded"></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button onclick="handleLogout()" class="w-full bg-white border border-red-100 text-red-500 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50 transition-all shadow-sm">
-                    <i data-lucide="log-out" class="w-5 h-5"></i> Sair da Conta
-                </button>
-            </div>
-
-            <div class="md:col-span-1 space-y-6">
-                
-                <div id="plan-card" class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-100 border border-slate-100 h-full flex flex-col relative overflow-hidden">
-                    <div class="animate-pulse flex flex-col gap-4">
-                        <div class="h-6 w-1/2 bg-slate-100 rounded"></div>
-                        <div class="h-20 w-full bg-slate-100 rounded"></div>
+                <div class="bg-blue-50/50 p-6 rounded-[24px] sm:rounded-[32px] border border-blue-100/50 flex items-start gap-4">
+                    <div class="bg-blue-100 p-2 rounded-xl text-blue-600 flex-shrink-0">
+                        <i data-lucide="info" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-black text-blue-900 uppercase tracking-tight">Privacidade e Dados</h4>
+                        <p class="text-xs text-blue-700 font-medium mt-1 leading-relaxed">
+                            Seus dados estão protegidos. Não compartilhamos informações dos seus orçamentos.
+                        </p>
                     </div>
                 </div>
-
             </div>
+
+            <!-- CARD DE PAGAMENTO (Abaixo no mobile) -->
+            <div class="lg:col-span-5 order-2">
+                <div id="plan-card" class="bg-white rounded-[32px] sm:rounded-[40px] p-8 shadow-2xl shadow-slate-100 border border-slate-100 relative overflow-hidden min-h-[400px] flex flex-col justify-center transition-all">
+                    <!-- Loader inicial -->
+                    <div id="plan-loader" class="flex flex-col items-center gap-4 text-center">
+                        <div class="w-12 h-12 border-4 border-green-100 border-t-green-600 rounded-full animate-spin"></div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sincronizando Plano...</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <footer class="hidden lg:block bg-slate-900 text-slate-500 pt-12 pb-24 lg:pb-12 mt-auto border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-2 mb-6">
-                <i data-lucide="zap" class="w-5 h-5 text-green-500 fill-current"></i>
-                <span class="font-black text-white text-xl uppercase italic">Zap<span class="text-green-600">Budget</span></span>
-            </div>
-            <p class="text-xs font-bold opacity-40 uppercase tracking-widest">© 2026 ZapBudget SaaS</p>
-        </div>
-    </footer>
-
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex items-center justify-around z-[60] lg:hidden">
-        <button onclick="location.href='app.html'" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-colors">
+    <!-- Barra de Navegação Inferior (Mobile Fixa) - APENAS 3 ITENS -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 h-20 flex items-center justify-around z-[100] lg:hidden no-print px-6 pb-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <a href="app.html" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-all">
             <i data-lucide="plus-circle" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Novo</span>
-        </button>
-        <button onclick="window.location.href='historico.html'" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-colors">
+            <span class="text-[9px] font-black uppercase tracking-widest">Novo</span>
+        </a>
+        <a href="historico.html" class="flex flex-col items-center gap-1 text-slate-400 hover:text-green-600 transition-all">
             <i data-lucide="history" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Histórico</span>
-        </button>
-        <button onclick="window.location.href='perfil.html'" class="flex flex-col items-center gap-1 text-green-600">
-            <i data-lucide="user" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold uppercase">Perfil</span>
-        </button>
+            <span class="text-[9px] font-black uppercase tracking-widest">Histórico</span>
+        </a>
+        <a href="perfil.html" class="flex flex-col items-center gap-1 text-green-600 scale-105">
+            <div class="bg-green-50 p-2 rounded-2xl">
+                <i data-lucide="user" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
+        </a>
     </div>
 
     <script>
@@ -201,75 +210,58 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
 
-        lucide.createIcons();
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        window.addEventListener('load', () => {
+            refreshIcons();
+            loadProfile();
+        });
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
+            if(!container) return;
             const toast = document.createElement('div');
-            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.className = `toast`;
+            if(type === 'error') toast.classList.add('error');
             const icon = type === 'error' ? 'alert-circle' : 'check-circle';
             const color = type === 'error' ? 'text-red-500' : 'text-green-500';
             toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-700">${message}</span>`;
             container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => { toast.remove(); }, 3000);
-        }
-
-        function maskCpf(cpf) {
-            if (!cpf) return '';
-            const clean = cpf.replace(/\D/g, '');
-            if (clean.length !== 11) return cpf;
-            return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4');
-        }
-
-        async function saveCpf() {
-            const newCpf = document.getElementById('input-cpf').value;
-            if (!newCpf || newCpf.length < 11) {
-                showToast("Digite um CPF válido (apenas números).", "error");
-                return;
-            }
-
-            const saveBtn = document.getElementById('btn-save-cpf');
-            const originalText = saveBtn.innerText;
-            saveBtn.innerText = "...";
-            saveBtn.disabled = true;
-
-            const { error } = await supabaseClient
-                .from('profiles')
-                .update({ cpf: newCpf })
-                .eq('id', currentUser.id);
-
-            if (error) {
-                console.error(error);
-                showToast("Erro ao salvar CPF.", "error");
-                saveBtn.innerText = originalText;
-                saveBtn.disabled = false;
-            } else {
-                showToast("CPF salvo com sucesso!");
-                loadProfile();
-            }
+            refreshIcons();
+            setTimeout(() => { if(toast.parentNode) toast.remove(); }, 3000);
         }
 
         async function loadProfile() {
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) {
-                    window.location.replace("login.html");
+                    window.location.href = "login.html";
                     return;
                 }
                 currentUser = session.user;
 
                 const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
                 document.getElementById('profile-name').innerText = name;
-                document.getElementById('profile-email').innerText = currentUser.email;
+                document.getElementById('profile-email').querySelector('span').innerText = currentUser.email;
                 document.getElementById('profile-avatar').innerText = name.charAt(0).toUpperCase();
 
-                const provider = currentUser.app_metadata.provider;
+                const provider = currentUser.app_metadata?.provider || 'email';
                 const providerEl = document.getElementById('profile-provider');
-                if (provider === 'google') {
-                    providerEl.innerHTML = `<i data-lucide="globe" class="w-4 h-4 text-blue-500"></i> Conta Google`;
-                } else {
-                    providerEl.innerHTML = `<i data-lucide="mail" class="w-4 h-4 text-slate-500"></i> Cadastro Manual`;
+                providerEl.innerHTML = provider === 'google' 
+                    ? `<i data-lucide="globe" class="w-5 h-5 text-blue-500"></i> Login via Google`
+                    : `<i data-lucide="mail" class="w-5 h-5 text-slate-500"></i> Login via E-mail`;
+
+                const topNavAvatar = document.getElementById('user-nav');
+                if (topNavAvatar) {
+                    topNavAvatar.innerHTML = `
+                        <div class="h-10 w-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-white ring-2 ring-green-100">
+                            ${name.charAt(0).toUpperCase()}
+                        </div>
+                    `;
                 }
 
                 const { data: profile } = await supabaseClient
@@ -278,107 +270,128 @@
                     .eq('id', currentUser.id)
                     .single();
 
-                if (profile) {
-                    const cpfContainer = document.getElementById('profile-cpf-container');
-                    if (profile.cpf) {
-                        const masked = maskCpf(profile.cpf);
-                        cpfContainer.innerHTML = `
-                            <div class="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
-                                <span>${masked}</span>
-                                <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
-                            </div>
-                        `;
-                    } else {
-                        cpfContainer.innerHTML = `
-                            <div class="flex gap-2">
-                                <input type="text" id="input-cpf" placeholder="Digite seu CPF" class="w-full bg-white border border-yellow-300 ring-2 ring-yellow-50 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-yellow-500 transition-all" maxlength="11">
-                                <button id="btn-save-cpf" onclick="saveCpf()" class="bg-slate-900 text-white px-4 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-lg">
-                                    SALVAR
-                                </button>
-                            </div>
-                            <p class="text-[10px] text-yellow-600 font-bold mt-1 ml-1 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Necessário para nota fiscal</p>
-                        `;
-                    }
+                const finalProfile = profile || {
+                    is_premium: false,
+                    trial_start: currentUser.created_at || new Date().toISOString()
+                };
 
-                    const planCard = document.getElementById('plan-card');
-                    const isPro = profile.is_premium;
-                    
-                    if (isPro) {
-                        planCard.innerHTML = `
-                            <div class="absolute top-0 right-0 p-4 opacity-10">
-                                <i data-lucide="crown" class="w-32 h-32 text-slate-900"></i>
-                            </div>
-                            <div class="relative z-10 flex flex-col h-full justify-between">
-                                <div>
-                                    <span class="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Plano Ativo</span>
-                                    <h3 class="text-2xl font-black text-slate-900 mt-4 uppercase">Membro PRO <i data-lucide="crown" class="inline w-6 h-6 text-yellow-500 fill-current"></i></h3>
-                                    <p class="text-sm text-slate-500 mt-2 font-medium">Você tem acesso ilimitado a todos os recursos.</p>
-                                </div>
-                                <div class="mt-6 pt-6 border-t border-slate-100">
-                                    <ul class="space-y-2 text-sm font-bold text-slate-700">
-                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Orçamentos Ilimitados</li>
-                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Sem marca d'água</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        const trialStart = new Date(profile.trial_start);
-                        const now = new Date();
-                        const diffTime = now - trialStart; 
-                        const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                        const daysLeft = Math.max(0, 7 - daysPassed);
-                        const isExpired = daysPassed >= 7;
+                renderPlanCard(finalProfile);
+                updateBadges(finalProfile);
+                refreshIcons();
 
-                        if (isExpired) {
-                            planCard.innerHTML = `
-                                <div class="absolute inset-0 bg-red-50"></div>
-                                <div class="relative z-10 flex flex-col h-full justify-between">
-                                    <div>
-                                        <span class="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Expirado</span>
-                                        <h3 class="text-2xl font-black text-red-900 mt-4">Trial Expirado</h3>
-                                        <p class="text-sm text-red-700 mt-2 font-bold">Assine para continuar enviando.</p>
-                                    </div>
-                                    <button onclick="goToStripe()" class="mt-6 w-full bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Desbloquear Agora</button>
-                                </div>
-                            `;
-                        } else {
-                            const progress = Math.min(100, (daysPassed / 7) * 100);
-                            planCard.innerHTML = `
-                                <div class="relative z-10 flex flex-col h-full justify-between">
-                                    <div>
-                                        <span class="bg-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Plano Gratuito</span>
-                                        <h3 class="text-2xl font-black text-slate-900 mt-4">Período Trial</h3>
-                                        <div class="mt-4">
-                                            <div class="flex justify-between items-end mb-1">
-                                                <span class="text-4xl font-black text-green-600">${daysLeft}</span>
-                                                <span class="text-xs font-bold text-slate-400 uppercase mb-1">Dias restantes</span>
-                                            </div>
-                                            <div class="w-full bg-slate-100 rounded-full h-2">
-                                                <div class="bg-green-500 h-2 rounded-full" style="width: ${100 - progress}%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onclick="goToStripe()" class="mt-8 w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Fazer Upgrade</button>
-                                </div>
-                            `;
-                        }
-                    }
-                    lucide.createIcons();
-                }
             } catch (error) {
                 console.error(error);
+                renderPlanCard({ is_premium: false, trial_start: new Date().toISOString() });
+                showToast("Erro ao sincronizar. Exibindo opções padrão.", "error");
+                refreshIcons();
             }
         }
 
-        async function handleLogout() {
-            try { await supabaseClient.auth.signOut(); } 
-            finally { window.location.replace("login.html"); }
+        function updateBadges(profile) {
+            const badge = document.getElementById('plan-badge-simple');
+            if (!badge) return;
+            if (profile && profile.is_premium) {
+                badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-600 text-white";
+                badge.innerHTML = `<i data-lucide="crown" class="w-3 h-3 fill-current"></i> Membro PRO`;
+            } else {
+                badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600";
+                badge.innerHTML = `Plano Gratuito`;
+            }
+            refreshIcons();
         }
 
-        function goToStripe() { window.open("https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01", "_blank"); }
+        function renderPlanCard(profile) {
+            const planCard = document.getElementById('plan-card');
+            if(!planCard) return;
+            const isPro = profile ? profile.is_premium : false;
+            
+            if (isPro) {
+                planCard.innerHTML = `
+                    <div class="absolute -top-10 -right-10 opacity-5">
+                        <i data-lucide="crown" class="w-48 h-48 text-green-900"></i>
+                    </div>
+                    <div class="relative z-10 flex flex-col h-full items-center text-center">
+                        <div class="bg-green-100 w-20 h-20 rounded-[32px] flex items-center justify-center text-green-600 mb-6 shadow-xl shadow-green-100/50">
+                            <i data-lucide="crown" class="w-10 h-10 fill-current"></i>
+                        </div>
+                        <h3 class="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase italic">VOCÊ É <span class="text-green-600">PRO</span></h3>
+                        <p class="text-slate-500 font-bold text-sm mt-4 leading-relaxed px-4">
+                            Sua assinatura está ativa e todos os recursos estão liberados.
+                        </p>
+                        
+                        <div class="w-full mt-10 space-y-4 text-left">
+                            <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div class="bg-green-500 p-1.5 rounded-full text-white flex-shrink-0"><i data-lucide="check" class="w-3 h-3"></i></div>
+                                <span class="text-xs font-black text-slate-700 uppercase tracking-tight truncate">Orçamentos Ilimitados</span>
+                            </div>
+                        </div>
+                        <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-12 italic">ZapBudget Premium</p>
+                    </div>
+                `;
+            } else {
+                const trialStart = profile ? new Date(profile.trial_start) : new Date();
+                const now = new Date();
+                const daysPassed = Math.floor(Math.max(0, now - trialStart) / (1000 * 60 * 60 * 24));
+                const daysLeft = Math.max(0, 7 - daysPassed);
+                const isExpired = daysPassed >= 7;
 
-        loadProfile();
+                planCard.innerHTML = `
+                    <div class="relative z-10 flex flex-col h-full">
+                        <div class="text-center mb-8">
+                            <span class="bg-orange-100 text-orange-600 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] mb-4 inline-block">
+                                ${isExpired ? 'Trial Expirado' : 'Período de Teste'}
+                            </span>
+                            <h3 class="text-2xl sm:text-3xl font-black text-slate-900 leading-none tracking-tight">Upgrade para <span class="text-green-600">PRO</span></h3>
+                        </div>
+
+                        <div class="space-y-4 mb-8">
+                            <button onclick="goToStripe()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-[24px] text-lg shadow-2xl shadow-slate-200 transition-all active:scale-95 flex items-center justify-center gap-3 group">
+                                <i data-lucide="zap" class="w-6 h-6 text-yellow-400 fill-current group-hover:scale-125 transition-transform"></i>
+                                ASSINAR POR R$ 19,90
+                            </button>
+                            <p class="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pagamento Seguro via Stripe</p>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                            <div class="flex justify-between items-end mb-3">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</span>
+                                    <span class="text-3xl font-black text-green-600 leading-none">${daysLeft} <span class="text-sm">dias</span></span>
+                                </div>
+                                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Trial 7 dias</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                                <div class="bg-green-500 h-full rounded-full transition-all duration-[1500ms]" style="width: ${Math.max(5, (daysLeft/7)*100)}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-8">
+                             <ul class="space-y-2 text-[10px] font-black text-slate-400 uppercase tracking-tight">
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-green-500 flex-shrink-0"></i> Orçamentos Profissionais</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-green-500 flex-shrink-0"></i> Histórico Completo</li>
+                             </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            refreshIcons();
+        }
+
+        async function handleLogout() {
+            try { 
+                await supabaseClient.auth.signOut(); 
+                window.location.href = "login.html";
+            } catch (e) { console.error(e); }
+        }
+
+        function goToStripe() {
+            if (!currentUser) {
+                showToast("Sessão expirada. Faça login novamente.", "error");
+                return;
+            }
+            const stripeUrl = `https://buy.stripe.com/5kQ9AUc1W6280O26VN9Zm01?client_reference_id=${currentUser.id}&prefilled_email=${encodeURIComponent(currentUser.email)}`;
+            window.open(stripeUrl, "_blank");
+        }
     </script>
 </body>
 </html>
